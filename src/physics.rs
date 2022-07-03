@@ -5,7 +5,7 @@ use crate::components::*;
 pub struct Physics;
 
 impl<'a> System<'a> for Physics {
-    type SystemData = (WriteStorage<'a, Position>, ReadStorage<'a, Velocity>);
+    type SystemData = (WriteStorage<'a, WorldPosition>, ReadStorage<'a, Velocity>);
 
     fn run(&mut self, mut data: Self::SystemData) {
         for (pos, vel) in (&mut data.0, &data.1).join() {

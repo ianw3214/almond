@@ -2,6 +2,7 @@ use specs::prelude::*;
 use specs_derive::Component;
 use sdl2::rect::{Point, Rect};
 
+// Direction ------------------------------------------
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Direction {
     Up,
@@ -10,14 +11,25 @@ pub enum Direction {
     Right
 }
 
+// KeyboardControlled ------------------------------------------
 #[derive(Component, Debug, Default)]
 #[storage(NullStorage)]
 pub struct KeyboardControlled;
 
+// WorldPosition ------------------------------------------
 #[derive(Component, Debug)]
 #[storage(VecStorage)]
-pub struct Position(pub Point);
+pub struct WorldPosition(pub Point);
 
+// GridPosition ------------------------------------------
+#[derive(Component, Debug)]
+#[storage(VecStorage)]
+pub struct GridPosition {
+    pub x : i32,
+    pub y : i32
+}
+
+// Velocity ------------------------------------------
 #[derive(Component, Debug)]
 #[storage(VecStorage)]
 pub struct Velocity {
@@ -25,6 +37,7 @@ pub struct Velocity {
     pub direction: Direction
 }
 
+// Sprite ------------------------------------------
 #[derive(Component, Debug, Clone)]
 #[storage(VecStorage)]
 pub struct Sprite {
@@ -32,6 +45,7 @@ pub struct Sprite {
     pub region: Rect
 }
 
+// MovementAnimation ------------------------------------------
 #[derive(Component, Debug)]
 #[storage(VecStorage)]
 pub struct MovementAnimation {

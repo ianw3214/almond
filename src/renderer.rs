@@ -7,7 +7,7 @@ use sdl2::render::{WindowCanvas, Texture};
 use crate::components::*;
 
 pub type SystemData<'a> = (
-    ReadStorage<'a, Position>,
+    ReadStorage<'a, WorldPosition>,
     ReadStorage<'a, Sprite>
 );
 
@@ -24,7 +24,7 @@ pub fn render(
 
     for (pos, sprite) in (&data.0, &data.1).join() {
         let current_frame = sprite.region;
-
+        
         let screen_position = pos.0 + Point::new(width as i32 / 2, height as i32 / 2);
         let screen_rect = Rect::from_center(screen_position, current_frame.width(), current_frame.height());
         canvas.copy(&textures[sprite.spritesheet], current_frame, screen_rect)?;

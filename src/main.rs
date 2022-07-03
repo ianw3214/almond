@@ -3,6 +3,7 @@ mod physics;
 mod animator;
 mod keyboard;
 mod renderer;
+mod grid;
 
 use sdl2::pixels::Color;
 use sdl2::event::Event;
@@ -19,6 +20,11 @@ use crate::components::*;
 pub enum MovementCommand {
     Stop,
     Move(Direction)
+}
+
+pub struct GridSize {
+    width : i32,
+    height : i32
 }
 
 fn direction_spritesheet_row(direction: Direction) -> i32 {
@@ -65,6 +71,7 @@ fn main() -> Result<(), String> {
         .expect("could not create event pump");
     
     let mut dispatcher = DispatcherBuilder::new()
+        .with(grid::Grid, "Grid", &[])
         .with(keyboard::Keyboard, "Keyboard", &[])
         .with(physics::Physics, "Physics", &["Keyboard"])
         .with(animator::Animator, "Animator", &["Keyboard"])
@@ -75,12 +82,16 @@ fn main() -> Result<(), String> {
 
     let movement_command : Option<MovementCommand> = None;
     world.insert(movement_command);
+
+    let grid_size : GridSize = GridSize { width : 40, height : 40};
+    world.insert(grid_size);
     
     let textures = [
-        texture_creator.load_texture("assets/bardo.png")?
+        texture_creator.load_texture("assets/villager.png")?,
+        texture_creator.load_texture("assets/tree.png")?
     ];
     let player_spritesheet = 0;
-    let player_top_left_frame = Rect::new(0, 0, 26, 26);
+    let player_top_left_frame = Rect::new(0, 0, 30, 40);
 
     let player_animation = MovementAnimation {
         current_frame: 0,
@@ -92,13 +103,18 @@ fn main() -> Result<(), String> {
 
     world.create_entity()
         .with(KeyboardControlled)
-        .with(Position(Point::new(0, 0)))
+        .with(WorldPosition(Point::new(0, 0)))
         .with(Velocity{speed:0, direction: Direction::Right})
         .with(player_animation.right_frames[0].clone())
         .with(player_animation)
         .build();
 
-    let mut i = 0;
+    world.create_entity()
+        .with(WorldPosition(Point::new(0, 0)))
+        .with(GridPosition{ x : 5, y : -5})
+        .with(Sprite{ spritesheet : 1, region : Rect::new(0, 0, 40, 60)})
+        .build();
+
     'running: loop {
         let mut movement_command = None;
 
@@ -133,12 +149,11 @@ fn main() -> Result<(), String> {
 
         *world.write_resource() = movement_command;
 
-        i = (i + 1) % 255;
         dispatcher.dispatch(&mut world);
         world.maintain();
 
         // render
-        renderer::render(&mut canvas, Color::RGB(i, 64, 255 - i), &textures, world.system_data())?;
+        renderer::render(&mut canvas, Color::RGB(64, 64, 255), &textures, world.system_data())?;
         ::std::thread::sleep(Duration::new(0, 1_100_000_000u32 / 20));
     }
 
