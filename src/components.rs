@@ -55,3 +55,13 @@ pub struct MovementAnimation {
     pub left_frames: Vec<Sprite>,
     pub right_frames: Vec<Sprite>
 }
+
+// Brain ------------------------------------------
+#[derive(Component, Debug, Default)]
+#[storage(NullStorage)]
+pub struct Brain;
+
+// Clickable ------------------------------------------
+#[derive(Component, Debug, Default)]
+#[storage(NullStorage)]
+pub struct Clickable;

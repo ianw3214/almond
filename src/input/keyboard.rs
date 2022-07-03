@@ -2,7 +2,7 @@ use specs::prelude::*;
 
 use crate::components::*;
 
-use super::MovementCommand;
+use crate::MovementCommand;
 
 const PLAYER_MOVEMENT_SPEED : i32 = 20;
 

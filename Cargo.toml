@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 specs = "*"
 specs-derive = "*"
+rand = "*"
 
 [dependencies.sdl2]
 version = "*"

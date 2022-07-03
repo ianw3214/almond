@@ -1,9 +1,10 @@
 mod components;
 mod physics;
 mod animator;
-mod keyboard;
+mod input;
 mod renderer;
 mod grid;
+mod ai;
 
 use sdl2::pixels::Color;
 use sdl2::event::Event;
@@ -21,6 +22,10 @@ pub enum MovementCommand {
     Stop,
     Move(Direction)
 }
+
+pub enum MouseCommand {
+    Click(Point)
+} 
 
 pub struct GridSize {
     width : i32,
@@ -72,9 +77,11 @@ fn main() -> Result<(), String> {
     
     let mut dispatcher = DispatcherBuilder::new()
         .with(grid::Grid, "Grid", &[])
-        .with(keyboard::Keyboard, "Keyboard", &[])
-        .with(physics::Physics, "Physics", &["Keyboard"])
-        .with(animator::Animator, "Animator", &["Keyboard"])
+        .with(input::keyboard::Keyboard, "Keyboard", &[])
+        .with(input::mouse::Mouse, "Mouse", &[])
+        .with(ai::AI, "AI", &[])
+        .with(physics::Physics, "Physics", &["Keyboard", "AI"])
+        .with(animator::Animator, "Animator", &["Keyboard", "AI"])
         .build();
     let mut world = World::new();
     dispatcher.setup(&mut world);
@@ -82,6 +89,8 @@ fn main() -> Result<(), String> {
 
     let movement_command : Option<MovementCommand> = None;
     world.insert(movement_command);
+    let mouse_command : Option<MouseCommand> = None;
+    world.insert(mouse_command);
 
     let grid_size : GridSize = GridSize { width : 40, height : 40};
     world.insert(grid_size);
@@ -101,6 +110,15 @@ fn main() -> Result<(), String> {
         right_frames: character_animation_frames(player_spritesheet, player_top_left_frame, Direction::Right)
     };
 
+    let ai_animation = MovementAnimation {
+        current_frame: 0,
+        up_frames: character_animation_frames(player_spritesheet, player_top_left_frame, Direction::Up),
+        down_frames: character_animation_frames(player_spritesheet, player_top_left_frame, Direction::Down),
+        left_frames: character_animation_frames(player_spritesheet, player_top_left_frame, Direction::Left),
+        right_frames: character_animation_frames(player_spritesheet, player_top_left_frame, Direction::Right)
+    };
+
+    // Player
     world.create_entity()
         .with(KeyboardControlled)
         .with(WorldPosition(Point::new(0, 0)))
@@ -109,14 +127,26 @@ fn main() -> Result<(), String> {
         .with(player_animation)
         .build();
 
+    // Tree
     world.create_entity()
         .with(WorldPosition(Point::new(0, 0)))
         .with(GridPosition{ x : 5, y : -5})
         .with(Sprite{ spritesheet : 1, region : Rect::new(0, 0, 40, 60)})
+        .with(Clickable)
+        .build();
+
+    // AI
+    world.create_entity()
+        .with(Brain)
+        .with(WorldPosition(Point::new(0, 0)))
+        .with(Velocity{speed:0, direction: Direction::Right})
+        .with(ai_animation.right_frames[0].clone())
+        .with(ai_animation)
         .build();
 
     'running: loop {
         let mut movement_command = None;
+        let mut mouse_command = None;
 
         // handle events
         for event in event_pump.poll_iter() {
@@ -143,11 +173,15 @@ fn main() -> Result<(), String> {
                 Event::KeyUp { keycode: Some(Keycode::Down), repeat: false, ..} => {
                     movement_command = Some(MovementCommand::Stop);
                 },
+                Event::MouseButtonDown { x, y, ..} => {
+                    mouse_command = Some(MouseCommand::Click(Point::new(x, y)));
+                }
                 _ => {}
             }
         }
 
         *world.write_resource() = movement_command;
+        *world.write_resource() = mouse_command;
 
         dispatcher.dispatch(&mut world);
         world.maintain();
