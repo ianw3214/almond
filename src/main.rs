@@ -1,10 +1,7 @@
 mod components;
-mod physics;
-mod animator;
+mod systems;
 mod input;
-mod renderer;
-mod grid;
-mod ai;
+mod ui;
 
 use sdl2::pixels::Color;
 use sdl2::event::Event;
@@ -76,16 +73,17 @@ fn main() -> Result<(), String> {
         .expect("could not create event pump");
     
     let mut dispatcher = DispatcherBuilder::new()
-        .with(grid::Grid, "Grid", &[])
+        .with(systems::grid::Grid, "Grid", &[])
         .with(input::keyboard::Keyboard, "Keyboard", &[])
         .with(input::mouse::Mouse, "Mouse", &[])
-        .with(ai::AI, "AI", &[])
-        .with(physics::Physics, "Physics", &["Keyboard", "AI"])
-        .with(animator::Animator, "Animator", &["Keyboard", "AI"])
+        .with(systems::ai::AI, "AI", &[])
+        .with(systems::physics::Physics, "Physics", &["Keyboard", "AI"])
+        .with(systems::animator::Animator, "Animator", &["Keyboard", "AI"])
         .build();
     let mut world = World::new();
     dispatcher.setup(&mut world);
-    renderer::SystemData::setup(&mut world);
+    systems::renderer::SystemData::setup(&mut world);
+    ui::renderer::SystemData::setup(&mut world);
 
     let movement_command : Option<MovementCommand> = None;
     world.insert(movement_command);
@@ -98,6 +96,9 @@ fn main() -> Result<(), String> {
     let textures = [
         texture_creator.load_texture("assets/villager.png")?,
         texture_creator.load_texture("assets/tree.png")?
+    ];
+    let ui_textures = [
+        texture_creator.load_texture("assets/selected.png")?
     ];
     let player_spritesheet = 0;
     let player_top_left_frame = Rect::new(0, 0, 30, 40);
@@ -130,9 +131,9 @@ fn main() -> Result<(), String> {
     // Tree
     world.create_entity()
         .with(WorldPosition(Point::new(0, 0)))
-        .with(GridPosition{ x : 5, y : -5})
+        .with(GridPosition{ x : 5, y : 5})
         .with(Sprite{ spritesheet : 1, region : Rect::new(0, 0, 40, 60)})
-        .with(Clickable)
+        .with(Clickable{ width : 40, height : 60, selected : false })
         .build();
 
     // AI
@@ -187,7 +188,14 @@ fn main() -> Result<(), String> {
         world.maintain();
 
         // render
-        renderer::render(&mut canvas, Color::RGB(64, 64, 255), &textures, world.system_data())?;
+        canvas.set_draw_color(Color::RGB(64, 64, 255));
+        canvas.clear(); 
+
+        systems::renderer::render(&mut canvas, &textures, world.system_data())?;
+        ui::renderer::render(&mut canvas, &ui_textures, world.system_data())?;
+
+        canvas.present();
+
         ::std::thread::sleep(Duration::new(0, 1_100_000_000u32 / 20));
     }
 

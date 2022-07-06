@@ -2,7 +2,7 @@ use specs::prelude::*;
 
 use crate::components::*;
 
-use super::GridSize;
+use crate::GridSize;
 
 pub struct Grid;
 

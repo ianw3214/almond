@@ -61,7 +61,19 @@ pub struct MovementAnimation {
 #[storage(NullStorage)]
 pub struct Brain;
 
+// Health ------------------------------------------
+#[derive(Component, Debug)]
+#[storage(VecStorage)]
+pub struct Health {
+    pub health : i32,
+    pub max_health : i32
+}
+
 // Clickable ------------------------------------------
-#[derive(Component, Debug, Default)]
-#[storage(NullStorage)]
-pub struct Clickable;
+#[derive(Component, Debug)]
+#[storage(VecStorage)]
+pub struct Clickable {
+    pub width : i32,
+    pub height : i32,
+    pub selected : bool
+}
