@@ -1,4 +1,5 @@
 mod components;
+mod util;
 mod systems;
 mod input;
 mod ui;
@@ -23,6 +24,11 @@ pub enum MovementCommand {
 pub enum MouseCommand {
     Click(Point)
 } 
+
+pub struct ScreenInfo {
+    width : i32,
+    height : i32
+}
 
 pub struct GridSize {
     width : i32,
@@ -57,6 +63,14 @@ fn character_animation_frames(spritesheet: usize, top_left_frame: Rect, directio
     frames
 }
 
+fn get_screen_info(canvas: &sdl2::render::WindowCanvas) -> ScreenInfo {
+    let (w, h) = canvas.output_size().expect("canvas should give an output size");
+    ScreenInfo {
+        width : w as i32,
+        height : h as i32
+    }
+}
+
 fn main() -> Result<(), String> {
 
     let sdl_context = sdl2::init().unwrap();
@@ -85,14 +99,16 @@ fn main() -> Result<(), String> {
     systems::renderer::SystemData::setup(&mut world);
     ui::renderer::SystemData::setup(&mut world);
 
+    // insert global resources
     let movement_command : Option<MovementCommand> = None;
     world.insert(movement_command);
     let mouse_command : Option<MouseCommand> = None;
     world.insert(mouse_command);
-
     let grid_size : GridSize = GridSize { width : 40, height : 40};
     world.insert(grid_size);
-    
+    let screen_info : ScreenInfo = get_screen_info(&canvas);
+    world.insert(screen_info);
+
     let textures = [
         texture_creator.load_texture("assets/villager.png")?,
         texture_creator.load_texture("assets/tree.png")?

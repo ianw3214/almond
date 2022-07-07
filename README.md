@@ -8,4 +8,6 @@ To make SDL2 work on windows, [follow the instructions here](https://github.com/
 
 Some sort of TODO list:
 
-- [ ] Handle separation between view space & world space
+- [x] Handle separation between view space & world space
+- [ ] UI to show info for currently selected entity
+- [ ] Grid based movement

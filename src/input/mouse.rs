@@ -1,6 +1,6 @@
 use specs::prelude::*;
 
-use crate::components::*;
+use crate::{components::*, util::screen_to_window_pos, ScreenInfo};
 
 use crate::MouseCommand;
 
@@ -9,6 +9,7 @@ pub struct Mouse;
 impl<'a> System<'a> for Mouse {
     type SystemData = (
         ReadExpect<'a, Option<MouseCommand>>,
+        ReadExpect<'a, ScreenInfo>,
         ReadStorage<'a, WorldPosition>,
         WriteStorage<'a, Clickable>
     );
@@ -21,18 +22,16 @@ impl<'a> System<'a> for Mouse {
 
         match mouse_command {
             &MouseCommand::Click(point) => {
-                for clickable in (&mut data.2).join() {
+                for clickable in (&mut data.3).join() {
                     clickable.selected = false;
                 }
 
-                let x = point.x;
-                let y = point.y;
-                for (pos, click) in (&data.1, &mut data.2).join() {
-                    println!("{} {} {} {}", x, y, pos.0.x, pos.0.y);
+                let world_pos = screen_to_window_pos(&*data.1, point);
+                let x = world_pos.x;
+                let y = world_pos.y;
+                for (pos, click) in (&data.2, &mut data.3).join() {
                     if x > pos.0.x && x < pos.0.x + click.width {
-                        println!("TEST2");
                         if y > pos.0.y && y < pos.0.y + click.height {
-                            println!("TEST3");
                             click.selected = true;
                             return
                         }
