@@ -35,6 +35,10 @@ pub struct GridSize {
     height : i32
 }
 
+pub struct CameraInfo {
+    scale : f32
+}
+
 fn direction_spritesheet_row(direction: Direction) -> i32 {
     match direction {
         Direction::Up => 3,
@@ -108,6 +112,8 @@ fn main() -> Result<(), String> {
     world.insert(grid_size);
     let screen_info : ScreenInfo = get_screen_info(&canvas);
     world.insert(screen_info);
+    let camera_info : CameraInfo = CameraInfo { scale: 2.0 };
+    world.insert(camera_info);
 
     let textures = [
         texture_creator.load_texture("assets/villager.png")?,
@@ -147,7 +153,7 @@ fn main() -> Result<(), String> {
     // Tree
     world.create_entity()
         .with(WorldPosition(Point::new(0, 0)))
-        .with(GridPosition{ x : 5, y : 5})
+        .with(GridPosition{ x : 2, y : -2})
         .with(Sprite{ spritesheet : 1, region : Rect::new(0, 0, 40, 60)})
         .with(Clickable{ width : 40, height : 60, selected : false })
         .build();

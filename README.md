@@ -8,6 +8,12 @@ To make SDL2 work on windows, [follow the instructions here](https://github.com/
 
 Some sort of TODO list:
 
-- [x] Handle separation between view space & world space
-- [ ] UI to show info for currently selected entity
-- [ ] Grid based movement
+- **GAMEPLAY**
+  - [ ] Grid based movement
+- **RENDERING**
+  - [x] Handle separation between view space & world space
+  - [x] Basic camera system to handle scale
+    - [ ] Extend camera system for custom camera position
+  - [ ] Sorted rendering based on y position/height
+- **UI**
+  - [ ] UI to show info for currently selected entity
