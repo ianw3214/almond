@@ -9,7 +9,9 @@ To make SDL2 work on windows, [follow the instructions here](https://github.com/
 Some sort of TODO list:
 
 - **GAMEPLAY**
-  - [ ] Grid based movement
+  - [x] Grid based movement
+    - [ ] Tweened movement system
+  - [ ] Turn ordering
 - **RENDERING**
   - [x] Handle separation between view space & world space
   - [x] Basic camera system to handle scale

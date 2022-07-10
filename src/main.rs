@@ -39,34 +39,6 @@ pub struct CameraInfo {
     scale : f32
 }
 
-fn direction_spritesheet_row(direction: Direction) -> i32 {
-    match direction {
-        Direction::Up => 3,
-        Direction::Down => 0,
-        Direction::Left => 1,
-        Direction::Right => 2
-    }
-}
-
-fn character_animation_frames(spritesheet: usize, top_left_frame: Rect, direction: Direction) -> Vec<Sprite> {
-    let (frame_width, frame_height) = top_left_frame.size();
-    let y_offset = top_left_frame.y() + frame_height as i32 * direction_spritesheet_row(direction);
-
-    let mut frames = Vec::new();
-    for i in 0..3 {
-        frames.push(Sprite {
-            spritesheet,
-            region: Rect::new(
-                top_left_frame.x() + frame_width as i32 * i,
-                y_offset,
-                frame_width,
-                frame_height
-            )
-        });
-    }
-    frames
-}
-
 fn get_screen_info(canvas: &sdl2::render::WindowCanvas) -> ScreenInfo {
     let (w, h) = canvas.output_size().expect("canvas should give an output size");
     ScreenInfo {
@@ -92,11 +64,10 @@ fn main() -> Result<(), String> {
     
     let mut dispatcher = DispatcherBuilder::new()
         .with(systems::grid::Grid, "Grid", &[])
-        .with(input::keyboard::Keyboard, "Keyboard", &[])
-        .with(input::mouse::Mouse, "Mouse", &[])
-        .with(systems::ai::AI, "AI", &[])
-        .with(systems::physics::Physics, "Physics", &["Keyboard", "AI"])
-        .with(systems::animator::Animator, "Animator", &["Keyboard", "AI"])
+        .with(input::mouse::action::Action, "Action", &[])
+        .with(input::mouse::clickable::Clickable, "Clickable", &["Action"])
+        .with(systems::animator::Animator, "Animator", &[])
+        .with(systems::turn::TurnSystem, "Turn", &[])
         .build();
     let mut world = World::new();
     dispatcher.setup(&mut world);
@@ -122,49 +93,45 @@ fn main() -> Result<(), String> {
     let ui_textures = [
         texture_creator.load_texture("assets/selected.png")?
     ];
-    let player_spritesheet = 0;
-    let player_top_left_frame = Rect::new(0, 0, 30, 40);
-
-    let player_animation = MovementAnimation {
+    let player_animation = Animation {
         current_frame: 0,
-        up_frames: character_animation_frames(player_spritesheet, player_top_left_frame, Direction::Up),
-        down_frames: character_animation_frames(player_spritesheet, player_top_left_frame, Direction::Down),
-        left_frames: character_animation_frames(player_spritesheet, player_top_left_frame, Direction::Left),
-        right_frames: character_animation_frames(player_spritesheet, player_top_left_frame, Direction::Right)
+        current_anim: 0,
+        animations: vec![(0, 3)]
     };
 
-    let ai_animation = MovementAnimation {
+    let ai_animation = Animation {
         current_frame: 0,
-        up_frames: character_animation_frames(player_spritesheet, player_top_left_frame, Direction::Up),
-        down_frames: character_animation_frames(player_spritesheet, player_top_left_frame, Direction::Down),
-        left_frames: character_animation_frames(player_spritesheet, player_top_left_frame, Direction::Left),
-        right_frames: character_animation_frames(player_spritesheet, player_top_left_frame, Direction::Right)
+        current_anim: 0,
+        animations: vec![(0, 3)]
     };
 
     // Player
     world.create_entity()
-        .with(KeyboardControlled)
         .with(WorldPosition(Point::new(0, 0)))
-        .with(Velocity{speed:0, direction: Direction::Right})
-        .with(player_animation.right_frames[0].clone())
+        .with(GridPosition{ x: 0, y: 0 })
+        .with(Sprite { spritesheet: 0, region: Rect::new(0, 0, 30, 40)})
         .with(player_animation)
+        .with(Selectable{ width: 30, height: 40, selected: false })
+        .with(Turn{ current: false })
         .build();
 
     // Tree
     world.create_entity()
         .with(WorldPosition(Point::new(0, 0)))
-        .with(GridPosition{ x : 2, y : -2})
-        .with(Sprite{ spritesheet : 1, region : Rect::new(0, 0, 40, 60)})
-        .with(Clickable{ width : 40, height : 60, selected : false })
+        .with(GridPosition{ x: 2, y: -2})
+        .with(Sprite{ spritesheet: 1, region: Rect::new(0, 0, 40, 60)})
+        .with(Selectable{ width: 40, height: 60, selected: false })
         .build();
 
     // AI
     world.create_entity()
-        .with(Brain)
+        // .with(Brain)
         .with(WorldPosition(Point::new(0, 0)))
-        .with(Velocity{speed:0, direction: Direction::Right})
-        .with(ai_animation.right_frames[0].clone())
+        .with(GridPosition{ x: -2, y: 1 })
+        .with(Sprite { spritesheet: 0, region: Rect::new(0, 0, 30, 40)})
         .with(ai_animation)
+        .with(Selectable{ width: 40, height: 60, selected: false })
+        .with(Turn{ current: false })
         .build();
 
     'running: loop {

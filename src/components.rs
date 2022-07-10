@@ -11,11 +11,6 @@ pub enum Direction {
     Right
 }
 
-// KeyboardControlled ------------------------------------------
-#[derive(Component, Debug, Default)]
-#[storage(NullStorage)]
-pub struct KeyboardControlled;
-
 // WorldPosition ------------------------------------------
 #[derive(Component, Debug)]
 #[storage(VecStorage)]
@@ -29,14 +24,6 @@ pub struct GridPosition {
     pub y : i32
 }
 
-// Velocity ------------------------------------------
-#[derive(Component, Debug)]
-#[storage(VecStorage)]
-pub struct Velocity {
-    pub speed: i32,
-    pub direction: Direction
-}
-
 // Sprite ------------------------------------------
 #[derive(Component, Debug, Clone)]
 #[storage(VecStorage)]
@@ -45,15 +32,13 @@ pub struct Sprite {
     pub region: Rect
 }
 
-// MovementAnimation ------------------------------------------
+// Animation ------------------------------------------
 #[derive(Component, Debug)]
 #[storage(VecStorage)]
-pub struct MovementAnimation {
+pub struct Animation {
     pub current_frame: usize,
-    pub up_frames: Vec<Sprite>,
-    pub down_frames: Vec<Sprite>,
-    pub left_frames: Vec<Sprite>,
-    pub right_frames: Vec<Sprite>
+    pub current_anim: usize,
+    pub animations: Vec<(usize, usize)>
 }
 
 // Brain ------------------------------------------
@@ -69,11 +54,18 @@ pub struct Health {
     pub max_health : i32
 }
 
-// Clickable ------------------------------------------
+// Selectable ------------------------------------------
 #[derive(Component, Debug)]
 #[storage(VecStorage)]
-pub struct Clickable {
+pub struct Selectable {
     pub width : i32,
     pub height : i32,
     pub selected : bool
+}
+
+// Turn ------------------------------------------
+#[derive(Component, Debug)]
+#[storage(VecStorage)]
+pub struct Turn {
+    pub current : bool
 }

@@ -2,7 +2,7 @@ use sdl2::rect::{Point /*, Rect  */};
 
 use crate::{ScreenInfo, CameraInfo};
 
-pub fn window_to_screen_pos(screen: &ScreenInfo, camera: &CameraInfo, point: Point) -> Point {
+pub fn world_to_screen_pos(screen: &ScreenInfo, camera: &CameraInfo, point: Point) -> Point {
     Point::new(
         (point.x as f32 * camera.scale) as i32 + screen.width / 2,
         (point.y as f32 * camera.scale) as i32  + screen.height / 2
@@ -22,7 +22,7 @@ pub fn windowToScreenRect(canvas: &mut WindowCanvas, region: Rect) -> Rect{
 }
 */
 
-pub fn screen_to_window_pos(screen: &ScreenInfo, camera: &CameraInfo, point: Point) -> Point {
+pub fn screen_to_world_pos(screen: &ScreenInfo, camera: &CameraInfo, point: Point) -> Point {
     Point::new(
         ((point.x as i32 - screen.width / 2) as f32 / camera.scale) as i32,
         ((point.y as i32 - screen.height / 2) as f32 / camera.scale) as i32

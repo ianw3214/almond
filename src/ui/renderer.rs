@@ -10,7 +10,7 @@ use crate::{ScreenInfo, CameraInfo};
 pub type SystemData<'a> = (
     ReadExpect<'a, ScreenInfo>,
     ReadExpect<'a, CameraInfo>,
-    ReadStorage<'a, Clickable>,
+    ReadStorage<'a, Selectable>,
     ReadStorage<'a, WorldPosition>
 );
 
@@ -23,7 +23,7 @@ pub fn render(
     for (clickable, pos) in (&data.2, &data.3).join() {
         // Render the selected sprite over selected entity
         if clickable.selected {
-            let screen_position = window_to_screen_pos(&*data.0, camera, pos.0);
+            let screen_position = world_to_screen_pos(&*data.0, camera, pos.0);
             let screen_rect = Rect::new(
                 screen_position.x, 
                 screen_position.y, 

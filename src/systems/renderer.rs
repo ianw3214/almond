@@ -23,7 +23,7 @@ pub fn render(
         let current_frame = sprite.region;
         let camera = &*data.1;
         
-        let screen_position = window_to_screen_pos(&*data.0, camera, pos.0);
+        let screen_position = world_to_screen_pos(&*data.0, camera, pos.0);
         let screen_rect = Rect::new(
             screen_position.x, 
             screen_position.y, 
