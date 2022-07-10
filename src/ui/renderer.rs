@@ -39,15 +39,11 @@ pub fn render(
     // Draw the hovered grid
     let mouse_info = &*data.2;
     let grid_size = &*data.3;
-    let world_pos = screen_to_world_pos(&*data.0, camera, Point::new(mouse_info.x, mouse_info.y));
-    let mut grid_point = Point::new(world_pos.x / grid_size.width, world_pos.y / grid_size.height);
-    if world_pos.x < 0 {
-        grid_point.x = grid_point.x - 1;
-    }
-    if world_pos.y < 0 {
-        grid_point.y = grid_point.y - 1;
-    }
-    let final_point = Point::new(grid_point.x * grid_size.width, grid_point.y * grid_size.height);
+    let grid_pos = screen_to_grid_pos(&*data.0, camera, grid_size, Point::new(mouse_info.x, mouse_info.y));
+    let final_point = Point::new(
+        grid_pos.x * grid_size.width,
+        grid_pos.y * grid_size.height
+    );
     let screen_position = world_to_screen_pos(&*data.0, camera, final_point);
     let screen_rect = Rect::new(
         screen_position.x,

@@ -1,7 +1,7 @@
 use specs::prelude::*;
 
 use crate::components::*;
-use crate::util::screen_to_world_pos;
+use crate::util::screen_to_grid_pos;
 use crate::{ScreenInfo, CameraInfo, MouseCommand, GridSize};
 
 pub struct Action;
@@ -24,13 +24,11 @@ impl<'a> System<'a> for Action {
 
         match mouse_command {
             &MouseCommand::Click(point) => {
-                let world_pos = screen_to_world_pos(&*data.2, &*data.3, point);
-                let grid_x = world_pos.x / data.0.width;
-                let grid_y = world_pos.y / data.0.height;
+                let mouse_grid_pos = screen_to_grid_pos(&*data.2, &*data.3, &*data.0, point);
                 for (selectable, grid_pos) in (&data.4, &mut data.5).join() {
                     if selectable.selected {
-                        grid_pos.x = grid_x;
-                        grid_pos.y = grid_y;
+                        grid_pos.x = mouse_grid_pos.x;
+                        grid_pos.y = mouse_grid_pos.y;
                         break
                     }
                 }
