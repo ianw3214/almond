@@ -30,6 +30,11 @@ pub struct ScreenInfo {
     height : i32
 }
 
+pub struct MouseInfo {
+    x : i32,
+    y : i32
+}
+
 pub struct GridSize {
     width : i32,
     height : i32
@@ -85,13 +90,16 @@ fn main() -> Result<(), String> {
     world.insert(screen_info);
     let camera_info : CameraInfo = CameraInfo { scale: 2.0 };
     world.insert(camera_info);
+    let mouse_info : MouseInfo = MouseInfo { x: 0, y: 0 };
+    world.insert(mouse_info);
 
     let textures = [
         texture_creator.load_texture("assets/villager.png")?,
         texture_creator.load_texture("assets/tree.png")?
     ];
     let ui_textures = [
-        texture_creator.load_texture("assets/selected.png")?
+        texture_creator.load_texture("assets/selected.png")?,
+        texture_creator.load_texture("assets/grid_hover.png")?
     ];
     let player_animation = Animation {
         current_frame: 0,
@@ -170,6 +178,10 @@ fn main() -> Result<(), String> {
             }
         }
 
+        let mouse = event_pump.mouse_state();
+        let mouse_info : MouseInfo = MouseInfo { x : mouse.x(), y : mouse.y() };
+        
+        *world.write_resource() = mouse_info;
         *world.write_resource() = movement_command;
         *world.write_resource() = mouse_command;
 

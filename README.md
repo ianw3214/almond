@@ -18,4 +18,8 @@ Some sort of TODO list:
     - [ ] Extend camera system for custom camera position
   - [ ] Sorted rendering based on y position/height
 - **UI**
+  - [ ] Custom mouse cursor rendering
+  - [x] Render currently hovered grid
   - [ ] UI to show info for currently selected entity
+- **CLEANUP**
+  - [ ] Merge _info_ structs into something more unified
