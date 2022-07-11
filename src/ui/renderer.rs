@@ -22,9 +22,9 @@ pub fn render(
     data: SystemData
 ) -> Result<(), String> {
     let camera = &*data.1;
-    for (clickable, pos) in (&data.4, &data.5).join() {
+    for (selectable, pos) in (&data.4, &data.5).join() {
         // Render the selected sprite over selected entity
-        if clickable.selected {
+        if selectable.selected {
             let screen_position = world_to_screen_pos(&*data.0, camera, pos.0);
             let screen_rect = Rect::new(
                 screen_position.x, 

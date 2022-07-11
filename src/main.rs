@@ -13,13 +13,9 @@ use sdl2::image::{self, LoadTexture, InitFlag};
 use specs::prelude::*;
 
 use std::time::Duration;
+use std::collections::VecDeque;
 
 use crate::components::*;
-
-pub enum MovementCommand {
-    Stop,
-    Move(Direction)
-}
 
 pub enum MouseCommand {
     Click(Point)
@@ -44,6 +40,15 @@ pub struct CameraInfo {
     scale : f32
 }
 
+pub enum UIAction {
+    ActionButton(i32)
+}
+
+pub enum CurrentAction {
+    None,
+    Move
+}
+
 fn get_screen_info(canvas: &sdl2::render::WindowCanvas) -> ScreenInfo {
     let (w, h) = canvas.output_size().expect("canvas should give an output size");
     ScreenInfo {
@@ -57,7 +62,7 @@ fn main() -> Result<(), String> {
     let sdl_context = sdl2::init().unwrap();
     let video_subsystem = sdl_context.video().unwrap();
     let _image_context = image::init(InitFlag::PNG | InitFlag::JPG)?;
-    let window = video_subsystem.window("game", 800, 600)
+    let window = video_subsystem.window("game", 1280, 720)
         .position_centered()
         .build()
         .expect("could not initialize video subsystem");
@@ -78,10 +83,9 @@ fn main() -> Result<(), String> {
     dispatcher.setup(&mut world);
     systems::renderer::SystemData::setup(&mut world);
     ui::renderer::SystemData::setup(&mut world);
+    ui::hud::SystemData::setup(&mut world);
 
     // insert global resources
-    let movement_command : Option<MovementCommand> = None;
-    world.insert(movement_command);
     let mouse_command : Option<MouseCommand> = None;
     world.insert(mouse_command);
     let grid_size : GridSize = GridSize { width : 40, height : 40};
@@ -92,6 +96,10 @@ fn main() -> Result<(), String> {
     world.insert(camera_info);
     let mouse_info : MouseInfo = MouseInfo { x: 0, y: 0 };
     world.insert(mouse_info);
+    let ui_commands : VecDeque<UIAction> = VecDeque::new();
+    world.insert(ui_commands);
+    let current_action : CurrentAction = CurrentAction::None;
+    world.insert(current_action);
 
     let textures = [
         texture_creator.load_texture("assets/villager.png")?,
@@ -100,6 +108,10 @@ fn main() -> Result<(), String> {
     let ui_textures = [
         texture_creator.load_texture("assets/selected.png")?,
         texture_creator.load_texture("assets/grid_hover.png")?
+    ];
+    let hud_textures = [
+        texture_creator.load_texture("assets/move_icon.png")?,
+        texture_creator.load_texture("assets/move_icon_selected.png")?
     ];
     let player_animation = Animation {
         current_frame: 0,
@@ -143,7 +155,6 @@ fn main() -> Result<(), String> {
         .build();
 
     'running: loop {
-        let mut movement_command = None;
         let mut mouse_command = None;
 
         // handle events
@@ -153,6 +164,7 @@ fn main() -> Result<(), String> {
                 Event::KeyDown { keycode: Some(Keycode::Escape), ..} => {
                     break 'running
                 },
+                /*
                 Event::KeyDown { keycode: Some(Keycode::Left), repeat: false, ..} => {
                     movement_command = Some(MovementCommand::Move(Direction::Left));
                 },
@@ -171,6 +183,7 @@ fn main() -> Result<(), String> {
                 Event::KeyUp { keycode: Some(Keycode::Down), repeat: false, ..} => {
                     movement_command = Some(MovementCommand::Stop);
                 },
+                 */
                 Event::MouseButtonDown { x, y, ..} => {
                     mouse_command = Some(MouseCommand::Click(Point::new(x, y)));
                 }
@@ -182,8 +195,10 @@ fn main() -> Result<(), String> {
         let mouse_info : MouseInfo = MouseInfo { x : mouse.x(), y : mouse.y() };
         
         *world.write_resource() = mouse_info;
-        *world.write_resource() = movement_command;
         *world.write_resource() = mouse_command;
+
+        // update custom systems
+        ui::hud::run(world.system_data());
 
         dispatcher.dispatch(&mut world);
         world.maintain();
@@ -194,9 +209,11 @@ fn main() -> Result<(), String> {
 
         systems::renderer::render(&mut canvas, &textures, world.system_data())?;
         ui::renderer::render(&mut canvas, &ui_textures, world.system_data())?;
+        ui::hud::render(&mut canvas, &hud_textures, world.system_data())?;
 
         canvas.present();
 
+        // TODO: Get rid of this
         ::std::thread::sleep(Duration::new(0, 1_100_000_000u32 / 20));
     }
 

@@ -2,15 +2,6 @@ use specs::prelude::*;
 use specs_derive::Component;
 use sdl2::rect::{Point, Rect};
 
-// Direction ------------------------------------------
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Direction {
-    Up,
-    Down,
-    Left,
-    Right
-}
-
 // WorldPosition ------------------------------------------
 #[derive(Component, Debug)]
 #[storage(VecStorage)]

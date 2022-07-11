@@ -11,6 +11,7 @@ Some sort of TODO list:
 - **GAMEPLAY**
   - [x] Grid based movement
     - [ ] Tweened movement system
+  - [ ] Entity actions
   - [ ] Turn ordering
 - **RENDERING**
   - [x] Handle separation between view space & world space
@@ -23,3 +24,5 @@ Some sort of TODO list:
   - [ ] UI to show info for currently selected entity
 - **CLEANUP**
   - [ ] Merge _info_ structs into something more unified
+  - [ ] Proper error handling
+  - [ ] Refactor systems to utilize [optional components](https://specs.amethyst.rs/docs/tutorials/08_join.html)
