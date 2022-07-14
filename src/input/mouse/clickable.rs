@@ -30,10 +30,12 @@ impl<'a> System<'a> for Clickable {
                 let world_pos = screen_to_world_pos(&*data.1, &*data.2, point);
                 let x = world_pos.x;
                 let y = world_pos.y;
-                for (pos, click) in (&data.3, &mut data.4).join() {
-                    if x > pos.0.x && x < pos.0.x + click.width {
-                        if y > pos.0.y && y < pos.0.y + click.height {
-                            click.selected = true;
+                for (pos, selectable) in (&data.3, &mut data.4).join() {
+                    let sprite_x = pos.point.x + selectable.x_offset;
+                    let sprite_y = pos.point.y + selectable.y_offset;
+                    if x > sprite_x && x < sprite_x + selectable.width {
+                        if y > sprite_y && y < sprite_y + selectable.height {
+                            selectable.selected = true;
                             return
                         }
                     }

@@ -5,7 +5,9 @@ use sdl2::rect::{Point, Rect};
 // WorldPosition ------------------------------------------
 #[derive(Component, Debug)]
 #[storage(VecStorage)]
-pub struct WorldPosition(pub Point);
+pub struct WorldPosition{
+    pub point: Point
+}
 
 // GridPosition ------------------------------------------
 #[derive(Component, Debug)]
@@ -20,7 +22,9 @@ pub struct GridPosition {
 #[storage(VecStorage)]
 pub struct Sprite {
     pub spritesheet: usize,
-    pub region: Rect
+    pub region: Rect,
+    pub x_offset: i32,
+    pub y_offset: i32
 }
 
 // Animation ------------------------------------------
@@ -51,7 +55,9 @@ pub struct Health {
 pub struct Selectable {
     pub width : i32,
     pub height : i32,
-    pub selected : bool
+    pub selected : bool,
+    pub x_offset : i32,
+    pub y_offset : i32
 }
 
 // Turn ------------------------------------------

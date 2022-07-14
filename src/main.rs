@@ -61,7 +61,8 @@ fn main() -> Result<(), String> {
 
     let sdl_context = sdl2::init().unwrap();
     let video_subsystem = sdl_context.video().unwrap();
-    let _image_context = image::init(InitFlag::PNG | InitFlag::JPG)?;
+    let _image_context = image::init(InitFlag::PNG | InitFlag::JPG)
+        .expect("Could not initialize image context");
     let window = video_subsystem.window("game", 1280, 720)
         .position_centered()
         .build()
@@ -127,30 +128,30 @@ fn main() -> Result<(), String> {
 
     // Player
     world.create_entity()
-        .with(WorldPosition(Point::new(0, 0)))
+        .with(WorldPosition{ point: Point::new(0, 0)})
         .with(GridPosition{ x: 0, y: 0 })
-        .with(Sprite { spritesheet: 0, region: Rect::new(0, 0, 30, 40)})
+        .with(Sprite { spritesheet: 0, region: Rect::new(0, 0, 30, 40), x_offset: -15, y_offset: -40})
         .with(player_animation)
-        .with(Selectable{ width: 30, height: 40, selected: false })
+        .with(Selectable{ width: 30, height: 40, selected: false, x_offset: -15, y_offset: -40 })
         .with(Turn{ current: false })
         .build();
 
     // Tree
     world.create_entity()
-        .with(WorldPosition(Point::new(0, 0)))
-        .with(GridPosition{ x: 2, y: -2})
-        .with(Sprite{ spritesheet: 1, region: Rect::new(0, 0, 40, 60)})
-        .with(Selectable{ width: 40, height: 60, selected: false })
+        .with(WorldPosition{ point: Point::new(0, 0) })
+        .with(GridPosition{ x: 1, y: -1})
+        .with(Sprite{ spritesheet: 1, region: Rect::new(0, 0, 40, 60), x_offset: -20, y_offset: -60})
+        .with(Selectable{ width: 40, height: 60, selected: false, x_offset: -25, y_offset: -60 })
         .build();
 
     // AI
     world.create_entity()
         // .with(Brain)
-        .with(WorldPosition(Point::new(0, 0)))
-        .with(GridPosition{ x: -2, y: 1 })
-        .with(Sprite { spritesheet: 0, region: Rect::new(0, 0, 30, 40)})
+        .with(WorldPosition{ point: Point::new(0, 0) })
+        .with(GridPosition{ x: 1, y: 1 })
+        .with(Sprite { spritesheet: 0, region: Rect::new(0, 0, 30, 40), x_offset: -15, y_offset: -40})
         .with(ai_animation)
-        .with(Selectable{ width: 40, height: 60, selected: false })
+        .with(Selectable{ width: 40, height: 60, selected: false, x_offset: -15, y_offset: -40 })
         .with(Turn{ current: false })
         .build();
 

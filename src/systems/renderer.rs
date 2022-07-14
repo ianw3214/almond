@@ -14,23 +14,40 @@ pub type SystemData<'a> = (
     ReadStorage<'a, Sprite>
 );
 
+struct RenderTarget<'a> {
+    y: i32,
+    rect: Rect,
+    sprite: &'a Sprite
+}
+
 pub fn render(
     canvas: &mut WindowCanvas, 
     textures: &[Texture],
     data: SystemData
 ) -> Result<(), String> {
+    // TODO: Priority queue/more efficient way to render
+    let mut render_targets : Vec<RenderTarget> = Vec::new();
+
     for (pos, sprite) in (&data.2, &data.3).join() {
-        let current_frame = sprite.region;
+        let screen_info = &*data.0;
         let camera = &*data.1;
+        let current_frame = sprite.region;
         
-        let screen_position = world_to_screen_pos(&*data.0, camera, pos.0);
+        // TODO: These calculations can be refactored
+        // - currently shared with ui renderer for selected sprite
+        let screen_position = world_to_screen_pos(screen_info, camera, pos.point);
         let screen_rect = Rect::new(
-            screen_position.x, 
-            screen_position.y, 
+            screen_position.x + (sprite.x_offset * camera.scale as i32), 
+            screen_position.y + (sprite.y_offset * camera.scale as i32), 
             ((current_frame.width() as f32) * camera.scale) as u32,
             ((current_frame.height() as f32) * camera.scale) as u32
-        );    
-        canvas.copy(&textures[sprite.spritesheet], current_frame, screen_rect)?;
+        );
+        render_targets.push(RenderTarget{ y: screen_rect.y, rect: screen_rect, sprite });
+    }
+
+    render_targets.sort_by(|a, b| a.y.cmp(&b.y));
+    for target in render_targets {
+        canvas.copy(&textures[target.sprite.spritesheet], target.sprite.region, target.rect)?;
     }
 
     Ok(())
