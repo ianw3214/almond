@@ -46,7 +46,8 @@ pub enum UIAction {
 
 pub enum CurrentAction {
     None,
-    Move
+    Move,
+    Attack
 }
 
 fn get_screen_info(canvas: &sdl2::render::WindowCanvas) -> ScreenInfo {
@@ -112,7 +113,11 @@ fn main() -> Result<(), String> {
     ];
     let hud_textures = [
         texture_creator.load_texture("assets/move_icon.png")?,
-        texture_creator.load_texture("assets/move_icon_selected.png")?
+        texture_creator.load_texture("assets/move_icon_selected.png")?,
+        texture_creator.load_texture("assets/heart.png")?,
+        texture_creator.load_texture("assets/heart_empty.png")?,
+        texture_creator.load_texture("assets/attack_icon.png")?,
+        texture_creator.load_texture("assets/attack_icon_selected.png")?
     ];
     let player_animation = Animation {
         current_frame: 0,
@@ -134,6 +139,7 @@ fn main() -> Result<(), String> {
         .with(player_animation)
         .with(Selectable{ width: 30, height: 40, selected: false, x_offset: -15, y_offset: -40 })
         .with(Turn{ current: false })
+        .with(Health{ health: 5, max_health: 5})
         .build();
 
     // Tree
@@ -153,6 +159,7 @@ fn main() -> Result<(), String> {
         .with(ai_animation)
         .with(Selectable{ width: 40, height: 60, selected: false, x_offset: -15, y_offset: -40 })
         .with(Turn{ current: false })
+        .with(Health{ health: 5, max_health: 5})
         .build();
 
     'running: loop {

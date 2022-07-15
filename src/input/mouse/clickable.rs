@@ -16,6 +16,9 @@ impl<'a> System<'a> for Clickable {
     );
 
     fn run(&mut self, mut data: Self::SystemData) {
+        let screen = &*data.1;
+        let camera = &*data.2;
+
         let mouse_command = match &*data.0 {
             Some(mouse_command) => mouse_command,
             None => return
@@ -27,9 +30,9 @@ impl<'a> System<'a> for Clickable {
                     selectable.selected = false;
                 }
 
-                let world_pos = screen_to_world_pos(&*data.1, &*data.2, point);
-                let x = world_pos.x;
-                let y = world_pos.y;
+                let click_pos = screen_to_world_pos(screen, camera, point);
+                let x = click_pos.x;
+                let y = click_pos.y;
                 for (pos, selectable) in (&data.3, &mut data.4).join() {
                     let sprite_x = pos.point.x + selectable.x_offset;
                     let sprite_y = pos.point.y + selectable.y_offset;

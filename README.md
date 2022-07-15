@@ -9,6 +9,7 @@ Some sort of TODO list:
 - **GAMEPLAY**
   - [x] Grid based movement
     - [ ] Tweened movement system
+  - [x] Entity attacks (ish)
   - [ ] Entity actions
   - [ ] Turn ordering
 - **RENDERING**
@@ -18,6 +19,7 @@ Some sort of TODO list:
   - [x] Render entities properly aligned to grid
     - [x] Sorted rendering based on y position/height
   - [ ] Proper animation fps
+  - [x] Render entity health
 - **UI**
   - [ ] Custom mouse cursor rendering
   - [x] Render currently hovered grid
