@@ -2,6 +2,8 @@ use specs::prelude::*;
 use specs_derive::Component;
 use sdl2::rect::{Point, Rect};
 
+use std::time::Instant;
+
 // WorldPosition ------------------------------------------
 #[derive(Component, Debug)]
 #[storage(VecStorage)]
@@ -33,7 +35,8 @@ pub struct Sprite {
 pub struct Animation {
     pub current_frame: usize,
     pub current_anim: usize,
-    pub animations: Vec<(usize, usize)>
+    pub animations: Vec<(usize, usize)>,
+    pub last_update : Instant
 }
 
 // Brain ------------------------------------------
@@ -64,5 +67,6 @@ pub struct Selectable {
 #[derive(Component, Debug)]
 #[storage(VecStorage)]
 pub struct Turn {
-    pub current : bool
+    pub current : bool,
+    pub priority : i32
 }

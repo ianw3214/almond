@@ -14,7 +14,8 @@ pub type SystemData<'a> = (
     ReadExpect<'a, GridSize>,
     ReadStorage<'a, Selectable>,
     ReadStorage<'a, WorldPosition>,
-    ReadStorage<'a, Sprite>
+    ReadStorage<'a, Sprite>,
+    ReadStorage<'a, Turn>
 );
 
 pub fn render(
@@ -24,7 +25,7 @@ pub fn render(
 ) -> Result<(), String> {
     let screen_info = &*data.0;
     let camera = &*data.1;
-    for (selectable, pos, sprite) in (&data.4, &data.5, &data.6).join() {
+    for (selectable, pos, sprite, turn) in (&data.4, &data.5, &data.6, (&data.7).maybe()).join() {
         // Render the selected sprite over selected entity
         if selectable.selected {
             let screen_position = world_to_screen_pos(screen_info, camera, pos.point);
@@ -35,6 +36,19 @@ pub fn render(
                 (40.0 * camera.scale) as u32
             );
             canvas.copy(&textures[0], None, screen_rect)?;
+        }
+        // Render the turn sprite over current turn entity
+        if let Some(turn) = turn {
+            if turn.current {
+                let screen_position = world_to_screen_pos(screen_info, camera, pos.point);
+                let screen_rect = Rect::new(
+                    screen_position.x + (sprite.x_offset * camera.scale as i32), 
+                    screen_position.y - (20 * camera.scale as i32), 
+                    (40.0 * camera.scale) as u32, 
+                    (40.0 * camera.scale) as u32
+                );
+                canvas.copy(&textures[2], None, screen_rect)?;
+            }
         }
     }
 

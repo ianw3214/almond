@@ -14,6 +14,7 @@ pub type SystemData<'a> = (
     WriteExpect<'a, Option<MouseCommand>>,
     WriteExpect<'a, VecDeque<UIAction>>,
     ReadStorage<'a, Selectable>,
+    ReadStorage<'a, Turn>,
     ReadStorage<'a, Health>
 );
 
@@ -50,40 +51,51 @@ pub fn run(mut data: SystemData) {
 
 pub fn render(
     canvas: &mut WindowCanvas,
-    textures: &[Texture],
+    textures: &mut [Texture],
     data: SystemData
 ) -> Result<(), String> {
     let screen = &*data.0;
     let mouse = &*data.1;
 
-    // TODO: This should only be handled when an entity w/ actions is selected
-    let x = screen.width - 80;
-    let y = screen.height - 80;
-    let screen_rect = Rect::new(x, y, 60, 60);
-    if (mouse.x > x && mouse.x < x + 60) && (mouse.y > y && mouse.y < y + 60) {
-        canvas.copy(&textures[1], None, screen_rect)?;
+    // Only draw actions if selected unit has turn
+    let mut draw_action_hud = false;
+    for (selectable, turn) in (&data.4, &data.5).join() {
+        if selectable.selected && turn.current {
+            draw_action_hud = true;
+        }
     }
-    else {
+
+    if draw_action_hud {
+        let x = screen.width - 80;
+        let y = screen.height - 80;
+        let screen_rect = Rect::new(x, y, 60, 60);
+        if (mouse.x > x && mouse.x < x + 60) && (mouse.y > y && mouse.y < y + 60) {
+            textures[0].set_color_mod(150, 150, 150);
+        }
+        else {
+            textures[0].set_color_mod(255, 255, 255);
+        }
         canvas.copy(&textures[0], None, screen_rect)?;
-    }
-    let x = screen.width - 80 - 80;
-    let y = screen.height - 80;
-    let screen_rect = Rect::new(x, y, 60, 60);
-    if (mouse.x > x && mouse.x < x + 60) && (mouse.y > y && mouse.y < y + 60) {
-        canvas.copy(&textures[5], None, screen_rect)?;
-    }
-    else {
-        canvas.copy(&textures[4], None, screen_rect)?;
+        let x = screen.width - 80 - 80;
+        let y = screen.height - 80;
+        let screen_rect = Rect::new(x, y, 60, 60);
+        if (mouse.x > x && mouse.x < x + 60) && (mouse.y > y && mouse.y < y + 60) {
+            textures[3].set_color_mod(150, 150, 150);
+        }
+        else {
+            textures[3].set_color_mod(255, 255, 255);
+        }
+        canvas.copy(&textures[3], None, screen_rect)?;
     }
 
     // Health of current selected entity
-    for (select, health) in (&data.4, (&data.5).maybe()).join() {
+    for (select, health) in (&data.4, (&data.6).maybe()).join() {
         if select.selected {
             if let Some(health) = health {
                 let y = screen.height - 80;
                 for index in 1..health.max_health {
                     let screen_rect = Rect::new(index * 40 + 80, y, 30, 30);
-                    let texture_id = if index < health.health { 2 } else { 3 };
+                    let texture_id = if index < health.health { 1 } else { 2 };
                     canvas.copy(&textures[texture_id], None, screen_rect)?;
                 }
             }

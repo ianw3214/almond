@@ -15,6 +15,8 @@ use specs::prelude::*;
 use std::time::Duration;
 use std::collections::VecDeque;
 
+use std::time::Instant;
+
 use crate::components::*;
 
 pub enum MouseCommand {
@@ -79,7 +81,7 @@ fn main() -> Result<(), String> {
         .with(input::mouse::action::Action, "Action", &[])
         .with(input::mouse::clickable::Clickable, "Clickable", &["Action"])
         .with(systems::animator::Animator, "Animator", &[])
-        .with(systems::turn::TurnSystem, "Turn", &[])
+        .with(systems::turn::TurnSystem{ last_prio: std::i32::MIN }, "Turn", &[])
         .build();
     let mut world = World::new();
     dispatcher.setup(&mut world);
@@ -109,26 +111,27 @@ fn main() -> Result<(), String> {
     ];
     let ui_textures = [
         texture_creator.load_texture("assets/selected.png")?,
-        texture_creator.load_texture("assets/grid_hover.png")?
+        texture_creator.load_texture("assets/grid_hover.png")?,
+        texture_creator.load_texture("assets/turn.png")?
     ];
-    let hud_textures = [
+    let mut hud_textures = [
         texture_creator.load_texture("assets/move_icon.png")?,
-        texture_creator.load_texture("assets/move_icon_selected.png")?,
         texture_creator.load_texture("assets/heart.png")?,
         texture_creator.load_texture("assets/heart_empty.png")?,
-        texture_creator.load_texture("assets/attack_icon.png")?,
-        texture_creator.load_texture("assets/attack_icon_selected.png")?
+        texture_creator.load_texture("assets/attack_icon.png")?
     ];
     let player_animation = Animation {
         current_frame: 0,
         current_anim: 0,
-        animations: vec![(0, 3)]
+        animations: vec![(0, 3)],
+        last_update: Instant::now()
     };
 
     let ai_animation = Animation {
         current_frame: 0,
         current_anim: 0,
-        animations: vec![(0, 3)]
+        animations: vec![(0, 3)],
+        last_update: Instant::now()
     };
 
     // Player
@@ -138,7 +141,7 @@ fn main() -> Result<(), String> {
         .with(Sprite { spritesheet: 0, region: Rect::new(0, 0, 30, 40), x_offset: -15, y_offset: -40})
         .with(player_animation)
         .with(Selectable{ width: 30, height: 40, selected: false, x_offset: -15, y_offset: -40 })
-        .with(Turn{ current: false })
+        .with(Turn{ current: false, priority: 1 })
         .with(Health{ health: 5, max_health: 5})
         .build();
 
@@ -158,7 +161,7 @@ fn main() -> Result<(), String> {
         .with(Sprite { spritesheet: 0, region: Rect::new(0, 0, 30, 40), x_offset: -15, y_offset: -40})
         .with(ai_animation)
         .with(Selectable{ width: 40, height: 60, selected: false, x_offset: -15, y_offset: -40 })
-        .with(Turn{ current: false })
+        .with(Turn{ current: false, priority: 2 })
         .with(Health{ health: 5, max_health: 5})
         .build();
 
@@ -217,7 +220,7 @@ fn main() -> Result<(), String> {
 
         systems::renderer::render(&mut canvas, &textures, world.system_data())?;
         ui::renderer::render(&mut canvas, &ui_textures, world.system_data())?;
-        ui::hud::render(&mut canvas, &hud_textures, world.system_data())?;
+        ui::hud::render(&mut canvas, &mut hud_textures, world.system_data())?;
 
         canvas.present();
 

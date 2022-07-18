@@ -19,7 +19,8 @@ impl<'a> System<'a> for Action {
         ReadStorage<'a, Selectable>,
         ReadStorage<'a, WorldPosition>,
         WriteStorage<'a, GridPosition>,
-        WriteStorage<'a, Health>
+        WriteStorage<'a, Health>,
+        WriteStorage<'a, Turn>
     );
 
     fn run(&mut self, mut data: Self::SystemData) {
@@ -56,11 +57,13 @@ impl<'a> System<'a> for Action {
                 match mouse_command {
                     &MouseCommand::Click(point) => {
                         let mouse_grid_pos = screen_to_grid_pos(screen, camera, grid, point);
-                        for (selectable, grid_pos) in (&data.6, &mut data.8).join() {
+                        for (selectable, grid_pos, turn) in (&data.6, &mut data.8, &mut data.10).join() {
                             if selectable.selected {
                                 grid_pos.x = mouse_grid_pos.x;
                                 grid_pos.y = mouse_grid_pos.y;
                                 *current_action = CurrentAction::None;
+                                // end entity turn
+                                turn.current = false;
                                 // TODO: Consume the moues action so it doesn't get further processed
                                 break
                             }
@@ -84,6 +87,12 @@ impl<'a> System<'a> for Action {
                                         // TODO: Handle death...
                                         health.health = health.health - 1;
                                         *current_action = CurrentAction::None;
+                                        // end entity turn
+                                        for (selectable, turn) in (&data.6, &mut data.10).join() {
+                                            if selectable.selected {
+                                                turn.current = false;
+                                            }
+                                        }
                                         // TODO: Consume the moues action so it doesn't get further processed
                                         break
                                     }

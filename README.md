@@ -11,7 +11,7 @@ Some sort of TODO list:
     - [ ] Tweened movement system
   - [x] Entity attacks (ish)
   - [ ] Entity actions
-  - [ ] Turn ordering
+  - [x] Turn ordering
 - **RENDERING**
   - [x] Handle separation between view space & world space
   - [x] Basic camera system to handle scale
@@ -20,10 +20,13 @@ Some sort of TODO list:
     - [x] Sorted rendering based on y position/height
   - [ ] Proper animation fps
   - [x] Render entity health
+  - [ ] Render background
 - **UI**
   - [ ] Custom mouse cursor rendering
   - [x] Render currently hovered grid
   - [ ] UI to show info for currently selected entity
+- **SYSTEMS**
+  - [ ] JSON File loading
 - **CLEANUP**
   - [ ] Merge _info_ structs into something more unified
   - [x] Proper error handling (good enough rn i guess)
