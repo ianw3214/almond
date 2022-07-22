@@ -10,12 +10,14 @@ pub struct Action;
 
 impl<'a> System<'a> for Action {
     type SystemData = (
+        // Global resources
         ReadExpect<'a, GridSize>,
         ReadExpect<'a, Option<MouseCommand>>,
         ReadExpect<'a, ScreenInfo>,
         ReadExpect<'a, CameraInfo>,
         WriteExpect<'a, VecDeque<UIAction>>,
         WriteExpect<'a, CurrentAction>,
+        // Components
         ReadStorage<'a, Selectable>,
         ReadStorage<'a, WorldPosition>,
         WriteStorage<'a, GridPosition>,
@@ -24,12 +26,24 @@ impl<'a> System<'a> for Action {
     );
 
     fn run(&mut self, mut data: Self::SystemData) {
-        // process UI actions
-        let ui_commands = &mut *data.4;
+        // Global resources
+        let grid_size = &*data.0;
+        let mouse_command = &*data.1;
+        let screen_info = &*data.2;
+        let camera_info = &*data.3;
+        let ui_actions = &mut *data.4;
         let current_action = &mut *data.5;
+        // Components
+        let selectables = &data.6;
+        let world_positions = &data.7;
+        let grid_positions = &mut data.8;
+        let healths = &mut data.9;
+        let turns = &mut data.10;
+
+        // process UI actions
         // TODO: Handle all ui commands instead of just 1 per tick
-        if !ui_commands.is_empty() {
-            let command = ui_commands.pop_back().unwrap();
+        if !ui_actions.is_empty() {
+            let command = ui_actions.pop_back().unwrap();
             match command {
                 UIAction::ActionButton(button) => {
                     if button == 0 {
@@ -42,23 +56,24 @@ impl<'a> System<'a> for Action {
             }
         }
 
-        let mouse_command = match &*data.1 {
+        let mouse_command = match mouse_command {
             Some(mouse_command) => mouse_command,
             None => return
         };
 
-        let grid = &*data.0;
-        let screen = &*data.2;
-        let camera = &*data.3;
-
+        // TODO: Fix bug:
+        //  When clicking invalid input, current action should reset to nothing (like a cancel)
         match current_action {
             CurrentAction::Move => {
                 // Handle movement
                 match mouse_command {
                     &MouseCommand::Click(point) => {
-                        let mouse_grid_pos = screen_to_grid_pos(screen, camera, grid, point);
-                        for (selectable, grid_pos, turn) in (&data.6, &mut data.8, &mut data.10).join() {
+                        let mouse_grid_pos = screen_to_grid_pos(screen_info, camera_info, grid_size, point);
+                        for (selectable, grid_pos, turn) in (selectables, grid_positions, turns).join() {
                             if selectable.selected {
+                                // TODO: Handle verifying valid movement target
+                                //  - move range
+                                //  - validate empty spot/valid path
                                 grid_pos.x = mouse_grid_pos.x;
                                 grid_pos.y = mouse_grid_pos.y;
                                 *current_action = CurrentAction::None;
@@ -75,9 +90,9 @@ impl<'a> System<'a> for Action {
                 // Handle attack
                 match mouse_command {
                     &MouseCommand::Click(point) => {
-                        for (selectable, world_pos, health) in (&data.6, &data.7, (&mut data.9).maybe()).join() {
+                        for (selectable, world_pos, health) in (selectables, world_positions, healths.maybe()).join() {
                             if let Some(health) = health {
-                                let click_pos = screen_to_world_pos(screen, camera, point);
+                                let click_pos = screen_to_world_pos(screen_info, camera_info, point);
                                 let x = click_pos.x;
                                 let y = click_pos.y;
                                 let sprite_x = world_pos.point.x + selectable.x_offset;
@@ -88,7 +103,7 @@ impl<'a> System<'a> for Action {
                                         health.health = health.health - 1;
                                         *current_action = CurrentAction::None;
                                         // end entity turn
-                                        for (selectable, turn) in (&data.6, &mut data.10).join() {
+                                        for (selectable, turn) in (selectables, turns).join() {
                                             if selectable.selected {
                                                 turn.current = false;
                                             }

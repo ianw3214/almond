@@ -12,7 +12,6 @@ use sdl2::image::{self, LoadTexture, InitFlag};
 
 use specs::prelude::*;
 
-use std::time::Duration;
 use std::collections::VecDeque;
 
 use std::time::Instant;
@@ -223,9 +222,6 @@ fn main() -> Result<(), String> {
         ui::hud::render(&mut canvas, &mut hud_textures, world.system_data())?;
 
         canvas.present();
-
-        // TODO: Get rid of this
-        ::std::thread::sleep(Duration::new(0, 1_100_000_000u32 / 20));
     }
 
     Ok(())

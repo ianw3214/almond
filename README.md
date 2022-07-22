@@ -11,6 +11,7 @@ Some sort of TODO list:
     - [ ] Tweened movement system
   - [x] Entity attacks (ish)
   - [ ] Entity actions
+  - [ ] Entity stats
   - [x] Turn ordering
 - **RENDERING**
   - [x] Handle separation between view space & world space

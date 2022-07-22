@@ -8,12 +8,17 @@ pub struct Animator;
 
 impl<'a> System<'a> for Animator {
     type SystemData = (
+        // Components
         WriteStorage<'a, Animation>,
         WriteStorage<'a, Sprite>
     );
 
     fn run(&mut self, mut data: Self::SystemData) {
-        for (anim, sprite) in (&mut data.0, &mut data.1).join() {
+        // Components
+        let animations = &mut data.0;
+        let sprites = &mut data.1;
+
+        for (anim, sprite) in (animations, sprites).join() {
             // hard coded at 10 fps currently
             //  - This should be set per animation in the future
             let update_duration = Duration::from_millis(100);

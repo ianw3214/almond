@@ -8,32 +8,39 @@ pub struct Clickable;
 
 impl<'a> System<'a> for Clickable {
     type SystemData = (
+        // Global resources
         ReadExpect<'a, Option<MouseCommand>>,
         ReadExpect<'a, ScreenInfo>,
         ReadExpect<'a, CameraInfo>,
+        // Components
         ReadStorage<'a, WorldPosition>,
         WriteStorage<'a, Selectable>
     );
 
     fn run(&mut self, mut data: Self::SystemData) {
-        let screen = &*data.1;
-        let camera = &*data.2;
+        // Global resources
+        let mouse_command = &*data.0;
+        let screen_info = &*data.1;
+        let camera_info = &*data.2;
+        // Components
+        let world_positions = &data.3;
+        let selectables = &mut data.4;
 
-        let mouse_command = match &*data.0 {
+        let mouse_command = match mouse_command {
             Some(mouse_command) => mouse_command,
             None => return
         };
 
         match mouse_command {
             &MouseCommand::Click(point) => {
-                for selectable in (&mut data.4).join() {
+                for selectable in (selectables).join() {
                     selectable.selected = false;
                 }
 
-                let click_pos = screen_to_world_pos(screen, camera, point);
+                let click_pos = screen_to_world_pos(screen_info, camera_info, point);
                 let x = click_pos.x;
                 let y = click_pos.y;
-                for (pos, selectable) in (&data.3, &mut data.4).join() {
+                for (pos, selectable) in (world_positions, selectables).join() {
                     let sprite_x = pos.point.x + selectable.x_offset;
                     let sprite_y = pos.point.y + selectable.y_offset;
                     if x > sprite_x && x < sprite_x + selectable.width {
