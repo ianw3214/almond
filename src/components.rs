@@ -58,7 +58,6 @@ pub struct Health {
 pub struct Selectable {
     pub width : i32,
     pub height : i32,
-    pub selected : bool,
     pub x_offset : i32,
     pub y_offset : i32
 }

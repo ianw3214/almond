@@ -5,7 +5,7 @@ use sdl2::render::{WindowCanvas, Texture};
 
 use crate::components::*;
 use crate::util::*;
-use crate::{ScreenInfo, CameraInfo, GridSize, MouseInfo};
+use crate::{ScreenInfo, CameraInfo, GridSize, MouseInfo, SelectedEntity};
 
 pub type SystemData<'a> = (
     // Global resources
@@ -13,8 +13,8 @@ pub type SystemData<'a> = (
     ReadExpect<'a, CameraInfo>,
     ReadExpect<'a, MouseInfo>,
     ReadExpect<'a, GridSize>,
+    ReadExpect<'a, SelectedEntity>,
     // Components
-    ReadStorage<'a, Selectable>,
     ReadStorage<'a, WorldPosition>,
     ReadStorage<'a, Sprite>,
     ReadStorage<'a, Turn>
@@ -30,15 +30,17 @@ pub fn render(
     let camera_info = &*data.1;
     let mouse_info = &*data.2;
     let grid_size = &*data.3;
+    let selected_entity = &*data.4;
     // Components
-    let selectables = &data.4;
     let world_positions = &data.5;
     let sprites = &data.6;
     let turns = &data.7;
 
-    for (selectable, pos, sprite, turn) in (selectables, world_positions, sprites, turns.maybe()).join() {
-        // Render the selected sprite over selected entity
-        if selectable.selected {
+    // Render the selected sprite over selected entity
+    match selected_entity.0 {
+        Some(selected) => {
+            let pos = world_positions.get(selected).unwrap();
+            let sprite = sprites.get(selected).unwrap();
             let screen_position = world_to_screen_pos(screen_info, camera_info, pos.point);
             let screen_rect = Rect::new(
                 screen_position.x + (sprite.x_offset * camera_info.scale as i32), 
@@ -47,7 +49,11 @@ pub fn render(
                 (40.0 * camera_info.scale) as u32
             );
             canvas.copy(&textures[0], None, screen_rect)?;
-        }
+        },
+        _ => ()
+    }
+
+    for (pos, sprite, turn) in (world_positions, sprites, turns.maybe()).join() {
         // Render the turn sprite over current turn entity
         if let Some(turn) = turn {
             if turn.current {

@@ -2,7 +2,7 @@ use specs::prelude::*;
 
 use crate::components::*;
 use crate::util::{screen_to_grid_pos, screen_to_world_pos};
-use crate::{ScreenInfo, CameraInfo, MouseCommand, GridSize, UIAction, CurrentAction};
+use crate::{ScreenInfo, CameraInfo, MouseCommand, GridSize, UIAction, CurrentAction, SelectedEntity};
 
 use std::collections::VecDeque;
 
@@ -17,6 +17,7 @@ impl<'a> System<'a> for Action {
         ReadExpect<'a, CameraInfo>,
         WriteExpect<'a, VecDeque<UIAction>>,
         WriteExpect<'a, CurrentAction>,
+        WriteExpect<'a, SelectedEntity>,
         // Components
         ReadStorage<'a, Selectable>,
         ReadStorage<'a, WorldPosition>,
@@ -33,12 +34,13 @@ impl<'a> System<'a> for Action {
         let camera_info = &*data.3;
         let ui_actions = &mut *data.4;
         let current_action = &mut *data.5;
+        let selected_entity = &mut *data.6;
         // Components
-        let selectables = &data.6;
-        let world_positions = &data.7;
-        let grid_positions = &mut data.8;
-        let healths = &mut data.9;
-        let turns = &mut data.10;
+        let selectables = &data.7;
+        let world_positions = &data.8;
+        let grid_positions = &mut data.9;
+        let healths = &mut data.10;
+        let turns = &mut data.11;
 
         // process UI actions
         // TODO: Handle all ui commands instead of just 1 per tick
@@ -69,8 +71,10 @@ impl<'a> System<'a> for Action {
                 match mouse_command {
                     &MouseCommand::Click(point) => {
                         let mouse_grid_pos = screen_to_grid_pos(screen_info, camera_info, grid_size, point);
-                        for (selectable, grid_pos, turn) in (selectables, grid_positions, turns).join() {
-                            if selectable.selected {
+                        match selected_entity.0 {
+                            Some(selected) => {
+                                let grid_pos = grid_positions.get_mut(selected).unwrap();
+                                let turn = turns.get_mut(selected).unwrap();
                                 // TODO: Handle verifying valid movement target
                                 //  - move range
                                 //  - validate empty spot/valid path
@@ -80,8 +84,8 @@ impl<'a> System<'a> for Action {
                                 // end entity turn
                                 turn.current = false;
                                 // TODO: Consume the moues action so it doesn't get further processed
-                                break
-                            }
+                            },
+                            None => ()
                         }
                     }
                 }
@@ -103,10 +107,12 @@ impl<'a> System<'a> for Action {
                                         health.health = health.health - 1;
                                         *current_action = CurrentAction::None;
                                         // end entity turn
-                                        for (selectable, turn) in (selectables, turns).join() {
-                                            if selectable.selected {
+                                        match selected_entity.0 {
+                                            Some(selected) => {
+                                                let turn = turns.get_mut(selected).unwrap();
                                                 turn.current = false;
-                                            }
+                                            },
+                                            None => ()
                                         }
                                         // TODO: Consume the moues action so it doesn't get further processed
                                         break

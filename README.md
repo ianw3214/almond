@@ -9,8 +9,8 @@ Some sort of TODO list:
 - **GAMEPLAY**
   - [x] Grid based movement
     - [ ] Tweened movement system
-  - [x] Entity attacks (ish)
-  - [ ] Entity actions
+  - [x] Basic entity attack
+    - [ ] Custom entity attacks
   - [ ] Entity stats
   - [x] Turn ordering
 - **RENDERING**
@@ -26,6 +26,8 @@ Some sort of TODO list:
   - [ ] Custom mouse cursor rendering
   - [x] Render currently hovered grid
   - [ ] UI to show info for currently selected entity
+    - [ ] Show entity name
+    - [ ] Show entity stats
 - **SYSTEMS**
   - [ ] JSON File loading
 - **CLEANUP**

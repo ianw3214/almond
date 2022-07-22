@@ -18,6 +18,7 @@ use std::time::Instant;
 
 use crate::components::*;
 
+#[derive(Clone)]
 pub enum MouseCommand {
     Click(Point)
 } 
@@ -50,6 +51,8 @@ pub enum CurrentAction {
     Move,
     Attack
 }
+
+pub struct SelectedEntity(Option<Entity>);
 
 fn get_screen_info(canvas: &sdl2::render::WindowCanvas) -> ScreenInfo {
     let (w, h) = canvas.output_size().expect("canvas should give an output size");
@@ -103,6 +106,8 @@ fn main() -> Result<(), String> {
     world.insert(ui_commands);
     let current_action : CurrentAction = CurrentAction::None;
     world.insert(current_action);
+    let selected_entity : SelectedEntity = SelectedEntity(None);
+    world.insert(selected_entity);
 
     let textures = [
         texture_creator.load_texture("assets/villager.png")?,
@@ -139,7 +144,7 @@ fn main() -> Result<(), String> {
         .with(GridPosition{ x: 0, y: 0 })
         .with(Sprite { spritesheet: 0, region: Rect::new(0, 0, 30, 40), x_offset: -15, y_offset: -40})
         .with(player_animation)
-        .with(Selectable{ width: 30, height: 40, selected: false, x_offset: -15, y_offset: -40 })
+        .with(Selectable{ width: 30, height: 40, x_offset: -15, y_offset: -40 })
         .with(Turn{ current: false, priority: 1 })
         .with(Health{ health: 5, max_health: 5})
         .build();
@@ -149,7 +154,7 @@ fn main() -> Result<(), String> {
         .with(WorldPosition{ point: Point::new(0, 0) })
         .with(GridPosition{ x: 1, y: -1})
         .with(Sprite{ spritesheet: 1, region: Rect::new(0, 0, 40, 60), x_offset: -20, y_offset: -60})
-        .with(Selectable{ width: 40, height: 60, selected: false, x_offset: -25, y_offset: -60 })
+        .with(Selectable{ width: 40, height: 60, x_offset: -25, y_offset: -60 })
         .build();
 
     // AI
@@ -159,7 +164,7 @@ fn main() -> Result<(), String> {
         .with(GridPosition{ x: 1, y: 1 })
         .with(Sprite { spritesheet: 0, region: Rect::new(0, 0, 30, 40), x_offset: -15, y_offset: -40})
         .with(ai_animation)
-        .with(Selectable{ width: 40, height: 60, selected: false, x_offset: -15, y_offset: -40 })
+        .with(Selectable{ width: 40, height: 60, x_offset: -15, y_offset: -40 })
         .with(Turn{ current: false, priority: 2 })
         .with(Health{ health: 5, max_health: 5})
         .build();
