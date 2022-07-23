@@ -12,9 +12,9 @@ impl<'a> System<'a> for Action {
     type SystemData = (
         // Global resources
         ReadExpect<'a, GridSize>,
-        ReadExpect<'a, Option<MouseCommand>>,
         ReadExpect<'a, ScreenInfo>,
         ReadExpect<'a, CameraInfo>,
+        WriteExpect<'a, Option<MouseCommand>>,
         WriteExpect<'a, VecDeque<UIAction>>,
         WriteExpect<'a, CurrentAction>,
         WriteExpect<'a, SelectedEntity>,
@@ -29,9 +29,9 @@ impl<'a> System<'a> for Action {
     fn run(&mut self, mut data: Self::SystemData) {
         // Global resources
         let grid_size = &*data.0;
-        let mouse_command = &*data.1;
-        let screen_info = &*data.2;
-        let camera_info = &*data.3;
+        let screen_info = &*data.1;
+        let camera_info = &*data.2;
+        let mouse_command = &mut *data.3;
         let ui_actions = &mut *data.4;
         let current_action = &mut *data.5;
         let selected_entity = &mut *data.6;
@@ -59,19 +59,20 @@ impl<'a> System<'a> for Action {
             }
         }
 
-        let mouse_command = match mouse_command {
+        let found_mouse_command = match mouse_command {
             Some(mouse_command) => mouse_command,
             None => return
         };
 
         // TODO: Is selected entity somehow not the same as current turn entity?
         //  - Need to handle differently if so
+        let mut mouse_command_handled = false;
         match current_action {
             CurrentAction::Move => {
                 // Handle movement
-                match mouse_command {
-                    &MouseCommand::Click(point) => {
-                        let mouse_grid_pos = screen_to_grid_pos(screen_info, camera_info, grid_size, point);
+                match found_mouse_command {
+                    MouseCommand::Click(point) => {
+                        let mouse_grid_pos = screen_to_grid_pos(screen_info, camera_info, grid_size, *point);
                         match selected_entity.0 {
                             Some(selected) => {
                                 let grid_pos = grid_positions.get_mut(selected).unwrap();
@@ -84,7 +85,8 @@ impl<'a> System<'a> for Action {
                                 *current_action = CurrentAction::None;
                                 // end entity turn
                                 turn.current = false;
-                                // TODO: Consume the moues action so it doesn't get further processed
+                                // Consume the moues action so it doesn't get further processed
+                                mouse_command_handled = true;
                             },
                             None => ()
                         }
@@ -93,11 +95,11 @@ impl<'a> System<'a> for Action {
             },
             CurrentAction::Attack(index) => {
                 // Handle attack
-                match mouse_command {
-                    &MouseCommand::Click(point) => {
+                match found_mouse_command {
+                    MouseCommand::Click(point) => {
                         for (selectable, world_pos, health) in (selectables, world_positions, healths.maybe()).join() {
                             if let Some(health) = health {
-                                let click_pos = screen_to_world_pos(screen_info, camera_info, point);
+                                let click_pos = screen_to_world_pos(screen_info, camera_info, *point);
                                 let x = click_pos.x;
                                 let y = click_pos.y;
                                 let sprite_x = world_pos.point.x + selectable.x_offset;
@@ -116,7 +118,8 @@ impl<'a> System<'a> for Action {
                                             },
                                             None => ()
                                         }
-                                        // TODO: Consume the moues action so it doesn't get further processed
+                                        // Consume the moues action so it doesn't get further processed
+                                        mouse_command_handled = true;
                                         break
                                     }
                                 }
@@ -129,6 +132,9 @@ impl<'a> System<'a> for Action {
                 }
             }
             CurrentAction::None => ()
+        }
+        if mouse_command_handled {
+            *mouse_command = Option::None;
         }
     }
 }
