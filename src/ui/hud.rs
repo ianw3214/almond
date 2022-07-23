@@ -25,12 +25,12 @@ pub fn run(mut data: SystemData) {
     // Global resources
     let screen_info = &*data.0;
     let _mouse_info = &*data.1;
-    let _selected_entity = &*data.2;
+    let selected_entity = &*data.2;
     let mouse_command = &mut *data.3;
     let ui_actions = &mut *data.4;
     // Components
     let _selectables = &data.5;
-    let _turns = &data.6;
+    let turns = &data.6;
     let _healths = &data.7;
 
     let found_mouse_command = match mouse_command {
@@ -38,30 +38,39 @@ pub fn run(mut data: SystemData) {
         None => return
     };
 
-    let mut mouse_button_clicked = false;
-    // TODO: This should only be handled when an entity w/ actions is selected
-    match found_mouse_command {
-        MouseCommand::Click(point) => {
-            let x = screen_info.width - 80;
-            let y = screen_info.height - 80;
-            if (point.x > x && point.x < x + 60) && (point.y > y && point.y < y + 60) {
-                ui_actions.push_back(UIAction::ActionButton(0));
-                // Consume the click so it doesn't get processed by other systems
-                mouse_button_clicked = true;
-                // *mouse_command = Option::None;
+    match selected_entity.0 {
+        Some(selected) => {
+            let mut mouse_button_handled = false;
+            // TODO: This should only be handled when an entity w/ actions is selected
+            match found_mouse_command {
+                MouseCommand::Click(point) => {
+                    let x = screen_info.width - 80;
+                    let y = screen_info.height - 80;
+                    if (point.x > x && point.x < x + 60) && (point.y > y && point.y < y + 60) {
+                        ui_actions.push_back(UIAction::ActionButton(0));
+                        // Consume the click so it doesn't get processed by other systems
+                        mouse_button_handled = true;
+                    }
+                    
+                    let turn = turns.get(selected);
+                    if let Some(turn) = turn {
+                        for (index, _attack) in turn.attacks.iter().enumerate() {
+                            let x = screen_info.width - 160 - (80 * index as i32);
+                            let y = screen_info.height - 80;
+                            if (point.x > x && point.x < x + 60) && (point.y > y && point.y < y + 60) {
+                                ui_actions.push_back(UIAction::ActionButton(1 + index as i32));
+                                // Consume the click so it doesn't get processed by other systems
+                                mouse_button_handled = true;
+                            }
+                        }
+                    }
+                }
             }
-            let x = screen_info.width - 80 - 80;
-            let y = screen_info.height - 80;
-            if (point.x > x && point.x < x + 60) && (point.y > y && point.y < y + 60) {
-                ui_actions.push_back(UIAction::ActionButton(1));
-                // Consume the click so it doesn't get processed by other systems
-                mouse_button_clicked = true;
-                // *mouse_command = Option::None;
+            if mouse_button_handled {
+                *mouse_command = Option::None;
             }
-        }
-    }
-    if mouse_button_clicked {
-        *mouse_command = Option::None;
+        },
+        None => ()
     }
 }
 
@@ -78,12 +87,13 @@ pub fn render(
     let _ui_actions = &*data.4;
     // Components
     let _selectables = &data.5;
-    let _turns = &data.6;
+    let turns = &data.6;
     let healths = &data.7;
 
     // Only draw actions if selected unit has turn
     match selected_entity.0 {
         Some(selected) => {
+            // TODO: Refactor the rendering of icons to a shared function
             // TODO: Need to check the valid actions for the selected entity
             let x = screen_info.width - 80;
             let y = screen_info.height - 80;
@@ -95,16 +105,22 @@ pub fn render(
                 textures[0].set_color_mod(255, 255, 255);
             }
             canvas.copy(&textures[0], None, screen_rect)?;
-            let x = screen_info.width - 80 - 80;
-            let y = screen_info.height - 80;
-            let screen_rect = Rect::new(x, y, 60, 60);
-            if (mouse_info.x > x && mouse_info.x < x + 60) && (mouse_info.y > y && mouse_info.y < y + 60) {
-                textures[3].set_color_mod(150, 150, 150);
+
+            let turn = turns.get(selected);
+            if let Some(turn) = turn {
+                for (index, _attack) in turn.attacks.iter().enumerate() {
+                    let x = screen_info.width - 160 - (80 * index as i32);
+                    let y = screen_info.height - 80;
+                    let screen_rect = Rect::new(x, y, 60, 60);
+                    if (mouse_info.x > x && mouse_info.x < x + 60) && (mouse_info.y > y && mouse_info.y < y + 60) {
+                        textures[3].set_color_mod(150, 150, 150);
+                    }
+                    else {
+                        textures[3].set_color_mod(255, 255, 255);
+                    }
+                    canvas.copy(&textures[3], None, screen_rect)?;
+                }
             }
-            else {
-                textures[3].set_color_mod(255, 255, 255);
-            }
-            canvas.copy(&textures[3], None, screen_rect)?;
 
             // Health of current selected entity
             let health = healths.get(selected);

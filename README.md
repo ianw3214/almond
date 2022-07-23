@@ -10,7 +10,10 @@ Some sort of TODO list:
   - [x] Grid based movement
     - [ ] Tweened movement system
   - [x] Basic entity attack
-    - [ ] Custom entity attacks
+    - [x] Custom entity attacks
+    - [ ] Attack properties
+      - [ ] Range
+      - [ ] Custom effects (damage, heal, etc..)
   - [ ] Entity stats
   - [x] Turn ordering
 - **RENDERING**

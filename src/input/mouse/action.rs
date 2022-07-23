@@ -48,11 +48,12 @@ impl<'a> System<'a> for Action {
             let command = ui_actions.pop_back().unwrap();
             match command {
                 UIAction::ActionButton(button) => {
+                    // TODO: Potentially separate out movement button
                     if button == 0 {
                         *current_action = CurrentAction::Move;
                     }
-                    if button == 1 {
-                        *current_action = CurrentAction::Attack;
+                    else {
+                        *current_action = CurrentAction::Attack(button - 1);
                     }
                 }
             }
@@ -64,7 +65,9 @@ impl<'a> System<'a> for Action {
         };
 
         // TODO: Fix bug:
-        //  When clicking invalid input, current action should reset to nothing (like a cancel)
+        //  -When clicking invalid input, current action should reset to nothing (like a cancel)
+        // TODO: Is selected entity somehow not the same as current turn entity?
+        //  - Need to handle differently if so
         match current_action {
             CurrentAction::Move => {
                 // Handle movement
@@ -90,7 +93,7 @@ impl<'a> System<'a> for Action {
                     }
                 }
             },
-            CurrentAction::Attack => {
+            CurrentAction::Attack(index) => {
                 // Handle attack
                 match mouse_command {
                     &MouseCommand::Click(point) => {
@@ -103,13 +106,14 @@ impl<'a> System<'a> for Action {
                                 let sprite_y = world_pos.point.y + selectable.y_offset;
                                 if x > sprite_x && x < sprite_x + selectable.width {
                                     if y > sprite_y && y < sprite_y + selectable.height {
-                                        // TODO: Handle death...
-                                        health.health = health.health - 1;
-                                        *current_action = CurrentAction::None;
-                                        // end entity turn
                                         match selected_entity.0 {
                                             Some(selected) => {
                                                 let turn = turns.get_mut(selected).unwrap();
+                                                let damage = turn.attacks[*index as usize].damage;
+                                                // TODO: Handle death...
+                                                health.health = health.health - damage;
+                                                *current_action = CurrentAction::None;
+                                                // end entity turn
                                                 turn.current = false;
                                             },
                                             None => ()

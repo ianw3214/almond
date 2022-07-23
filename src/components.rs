@@ -2,6 +2,8 @@ use specs::prelude::*;
 use specs_derive::Component;
 use sdl2::rect::{Point, Rect};
 
+use crate::Attack;
+
 use std::time::Instant;
 
 // WorldPosition ------------------------------------------
@@ -67,5 +69,6 @@ pub struct Selectable {
 #[storage(VecStorage)]
 pub struct Turn {
     pub current : bool,
-    pub priority : i32
+    pub priority : i32,
+    pub attacks : Vec<Attack>
 }

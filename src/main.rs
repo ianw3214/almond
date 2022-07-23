@@ -49,7 +49,12 @@ pub enum UIAction {
 pub enum CurrentAction {
     None,
     Move,
-    Attack
+    Attack(i32)
+}
+
+#[derive(Debug)]
+pub struct Attack {
+    damage : i32
 }
 
 pub struct SelectedEntity(Option<Entity>);
@@ -145,7 +150,7 @@ fn main() -> Result<(), String> {
         .with(Sprite { spritesheet: 0, region: Rect::new(0, 0, 30, 40), x_offset: -15, y_offset: -40})
         .with(player_animation)
         .with(Selectable{ width: 30, height: 40, x_offset: -15, y_offset: -40 })
-        .with(Turn{ current: false, priority: 1 })
+        .with(Turn{ current: false, priority: 1, attacks: vec![Attack{ damage : 1}, Attack{ damage : 2}] })
         .with(Health{ health: 5, max_health: 5})
         .build();
 
@@ -165,7 +170,7 @@ fn main() -> Result<(), String> {
         .with(Sprite { spritesheet: 0, region: Rect::new(0, 0, 30, 40), x_offset: -15, y_offset: -40})
         .with(ai_animation)
         .with(Selectable{ width: 40, height: 60, x_offset: -15, y_offset: -40 })
-        .with(Turn{ current: false, priority: 2 })
+        .with(Turn{ current: false, priority: 2, attacks: vec![Attack{ damage : 2}]  })
         .with(Health{ health: 5, max_health: 5})
         .build();
 
