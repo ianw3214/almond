@@ -64,8 +64,6 @@ impl<'a> System<'a> for Action {
             None => return
         };
 
-        // TODO: Fix bug:
-        //  -When clicking invalid input, current action should reset to nothing (like a cancel)
         // TODO: Is selected entity somehow not the same as current turn entity?
         //  - Need to handle differently if so
         match current_action {
@@ -122,6 +120,9 @@ impl<'a> System<'a> for Action {
                                         break
                                     }
                                 }
+                                // If no valid input was matched, reset the current action
+                                *current_action = CurrentAction::None;
+                                break
                             }
                         }
                     }
