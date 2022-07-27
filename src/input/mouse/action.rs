@@ -99,15 +99,20 @@ impl<'a> System<'a> for Action {
                     MouseCommand::Click(point) => {
                         for (selectable, world_pos, health) in (selectables, world_positions, healths.maybe()).join() {
                             if let Some(health) = health {
+                                println!("TEST");
                                 let click_pos = screen_to_world_pos(screen_info, camera_info, *point);
                                 let x = click_pos.x;
                                 let y = click_pos.y;
                                 let sprite_x = world_pos.point.x + selectable.x_offset;
                                 let sprite_y = world_pos.point.y + selectable.y_offset;
+                                println!("{} {} {} {}", x, y, sprite_x, sprite_y);
                                 if x > sprite_x && x < sprite_x + selectable.width {
+                                    println!("TEST4444");
                                     if y > sprite_y && y < sprite_y + selectable.height {
+                                        println!("TEST2");
                                         match selected_entity.0 {
                                             Some(selected) => {
+                                                println!("TEST3");
                                                 let turn = turns.get_mut(selected).unwrap();
                                                 let damage = turn.attacks[*index as usize].damage;
                                                 // TODO: Handle death...
@@ -123,11 +128,10 @@ impl<'a> System<'a> for Action {
                                         break
                                     }
                                 }
-                                // If no valid input was matched, reset the current action
-                                *current_action = CurrentAction::None;
-                                break
                             }
                         }
+                        // If no valid input was matched, reset the current action
+                        *current_action = CurrentAction::None;
                     }
                 }
             }

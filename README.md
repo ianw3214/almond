@@ -16,6 +16,7 @@ Some sort of TODO list:
       - [ ] Custom effects (damage, heal, etc..)
   - [ ] Entity stats
   - [x] Turn ordering
+  - [ ] Enemy AI
 - **RENDERING**
   - [x] Handle separation between view space & world space
   - [x] Basic camera system to handle scale

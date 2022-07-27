@@ -162,7 +162,7 @@ fn main() -> Result<(), String> {
         .with(GridPosition{ x: 1, y: 1 })
         .with(Sprite { spritesheet: 1, region: Rect::new(0, 0, 30, 40), x_offset: -15, y_offset: -40})
         .with(ai_animation)
-        .with(Selectable{ width: 40, height: 60, x_offset: -15, y_offset: -40 })
+        .with(Selectable{ width: 30, height: 40, x_offset: -15, y_offset: -40 })
         .with(Turn{ current: false, priority: 2, attacks: vec![Attack{ damage : 2}]  })
         .with(Health{ health: 5, max_health: 5})
         .build();
