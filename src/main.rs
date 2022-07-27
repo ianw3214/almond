@@ -116,6 +116,7 @@ fn main() -> Result<(), String> {
 
     let textures = [
         texture_creator.load_texture("assets/villager.png")?,
+        texture_creator.load_texture("assets/villager2.png")?,
         texture_creator.load_texture("assets/tree.png")?
     ];
     let ui_textures = [
@@ -154,24 +155,24 @@ fn main() -> Result<(), String> {
         .with(Health{ health: 5, max_health: 5})
         .build();
 
-    // Tree
-    world.create_entity()
-        .with(WorldPosition{ point: Point::new(0, 0) })
-        .with(GridPosition{ x: 1, y: -1})
-        .with(Sprite{ spritesheet: 1, region: Rect::new(0, 0, 40, 60), x_offset: -20, y_offset: -60})
-        .with(Selectable{ width: 40, height: 60, x_offset: -25, y_offset: -60 })
-        .build();
-
-    // AI
+    // Player 2
     world.create_entity()
         // .with(Brain)
         .with(WorldPosition{ point: Point::new(0, 0) })
         .with(GridPosition{ x: 1, y: 1 })
-        .with(Sprite { spritesheet: 0, region: Rect::new(0, 0, 30, 40), x_offset: -15, y_offset: -40})
+        .with(Sprite { spritesheet: 1, region: Rect::new(0, 0, 30, 40), x_offset: -15, y_offset: -40})
         .with(ai_animation)
         .with(Selectable{ width: 40, height: 60, x_offset: -15, y_offset: -40 })
         .with(Turn{ current: false, priority: 2, attacks: vec![Attack{ damage : 2}]  })
         .with(Health{ health: 5, max_health: 5})
+        .build();
+
+    // Tree
+    world.create_entity()
+        .with(WorldPosition{ point: Point::new(0, 0) })
+        .with(GridPosition{ x: 1, y: -1})
+        .with(Sprite{ spritesheet: 2, region: Rect::new(0, 0, 40, 60), x_offset: -20, y_offset: -60})
+        .with(Selectable{ width: 40, height: 60, x_offset: -25, y_offset: -60 })
         .build();
 
     'running: loop {
