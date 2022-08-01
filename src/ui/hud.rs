@@ -44,21 +44,13 @@ pub fn run(mut data: SystemData) {
             // TODO: This should only be handled when an entity w/ actions is selected
             match found_mouse_command {
                 MouseCommand::Click(point) => {
-                    let x = screen_info.width - 80;
-                    let y = screen_info.height - 80;
-                    if (point.x > x && point.x < x + 60) && (point.y > y && point.y < y + 60) {
-                        ui_actions.push_back(UIAction::ActionButton(0));
-                        // Consume the click so it doesn't get processed by other systems
-                        mouse_button_handled = true;
-                    }
-                    
                     let turn = turns.get(selected);
                     if let Some(turn) = turn {
-                        for (index, _attack) in turn.attacks.iter().enumerate() {
-                            let x = screen_info.width - 160 - (80 * index as i32);
+                        for (index, _attack) in turn.actions.iter().enumerate() {
+                            let x = screen_info.width - 80 - (80 * index as i32);
                             let y = screen_info.height - 80;
                             if (point.x > x && point.x < x + 60) && (point.y > y && point.y < y + 60) {
-                                ui_actions.push_back(UIAction::ActionButton(1 + index as i32));
+                                ui_actions.push_back(UIAction::ActionButton(index as i32));
                                 // Consume the click so it doesn't get processed by other systems
                                 mouse_button_handled = true;
                             }
@@ -95,30 +87,23 @@ pub fn render(
         Some(selected) => {
             // TODO: Refactor the rendering of icons to a shared function
             // TODO: Need to check the valid actions for the selected entity
-            let x = screen_info.width - 80;
-            let y = screen_info.height - 80;
-            let screen_rect = Rect::new(x, y, 60, 60);
-            if (mouse_info.x > x && mouse_info.x < x + 60) && (mouse_info.y > y && mouse_info.y < y + 60) {
-                textures[0].set_color_mod(150, 150, 150);
-            }
-            else {
-                textures[0].set_color_mod(255, 255, 255);
-            }
-            canvas.copy(&textures[0], None, screen_rect)?;
-
             let turn = turns.get(selected);
             if let Some(turn) = turn {
-                for (index, _attack) in turn.attacks.iter().enumerate() {
-                    let x = screen_info.width - 160 - (80 * index as i32);
+                for (index, _attack) in turn.actions.iter().enumerate() {
+                    // TODO: Actions themselves should store which icon to render
+                    //  - Remove hard coded icon choice and get from data
+                    let icon = if index == 0 {0} else {3};
+
+                    let x = screen_info.width - 80 - (80 * index as i32);
                     let y = screen_info.height - 80;
                     let screen_rect = Rect::new(x, y, 60, 60);
                     if (mouse_info.x > x && mouse_info.x < x + 60) && (mouse_info.y > y && mouse_info.y < y + 60) {
-                        textures[3].set_color_mod(150, 150, 150);
+                        textures[icon].set_color_mod(150, 150, 150);
                     }
                     else {
-                        textures[3].set_color_mod(255, 255, 255);
+                        textures[icon].set_color_mod(255, 255, 255);
                     }
-                    canvas.copy(&textures[3], None, screen_rect)?;
+                    canvas.copy(&textures[icon], None, screen_rect)?;
                 }
             }
 

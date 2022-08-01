@@ -2,7 +2,7 @@ use specs::prelude::*;
 use specs_derive::Component;
 use sdl2::rect::{Point, Rect};
 
-use crate::Attack;
+use crate::Action;
 
 use std::time::Instant;
 
@@ -70,5 +70,5 @@ pub struct Selectable {
 pub struct Turn {
     pub current : bool,
     pub priority : i32,
-    pub attacks : Vec<Attack>
+    pub actions : Vec<Action>
 }
