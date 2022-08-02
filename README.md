@@ -6,6 +6,9 @@ To make SDL2 work on windows, [follow the instructions here](https://github.com/
 
 Some sort of TODO list:
 
+- **STUFF**
+  - [ ] Game design docs?? (kinda extra...)
+
 - **GAMEPLAY**
   - [x] Grid based movement
     - [ ] Tweened movement system
@@ -26,6 +29,8 @@ Some sort of TODO list:
   - [ ] Proper animation fps
   - [x] Render entity health
   - [ ] Render background
+  - [ ] Render attack info when selected
+    - [ ] Range indicator
 - **UI**
   - [ ] Custom mouse cursor rendering
   - [x] Render currently hovered grid
@@ -34,6 +39,8 @@ Some sort of TODO list:
     - [ ] Show entity stats
 - **SYSTEMS**
   - [ ] JSON File loading
+    - [ ] Character saves
+    - [ ] Campaign saves (Combined with character saves?)
 - **CLEANUP**
   - [ ] Merge _info_ structs into something more unified
   - [x] Proper error handling (good enough rn i guess)

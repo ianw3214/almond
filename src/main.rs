@@ -3,6 +3,7 @@ mod util;
 mod systems;
 mod input;
 mod ui;
+mod gameplay;
 
 use sdl2::pixels::Color;
 use sdl2::event::Event;
@@ -17,6 +18,7 @@ use std::collections::VecDeque;
 use std::time::Instant;
 
 use crate::components::*;
+use crate::gameplay::action::*;
 
 #[derive(Clone)]
 pub enum MouseCommand {
@@ -52,17 +54,6 @@ pub enum CurrentAction {
     Action(i32)
 }
 
-#[derive(Debug)]
-pub enum ActionEffect {
-    Move,
-    Damage(i32)
-}
-
-#[derive(Debug)]
-pub struct Action {
-    effects : Vec<ActionEffect>
-}
-
 pub struct SelectedEntity(Option<Entity>);
 
 fn get_screen_info(canvas: &sdl2::render::WindowCanvas) -> ScreenInfo {
@@ -91,8 +82,7 @@ fn main() -> Result<(), String> {
     
     let mut dispatcher = DispatcherBuilder::new()
         .with(systems::grid::Grid, "Grid", &[])
-        .with(input::mouse::action::Action, "Action", &[])
-        .with(input::mouse::clickable::Clickable, "Clickable", &["Action"])
+        .with(input::mouse::Mouse, "Action", &[])
         .with(systems::animator::Animator, "Animator", &[])
         .with(systems::turn::TurnSystem{ last_prio: std::i32::MIN }, "Turn", &[])
         .build();
@@ -157,7 +147,7 @@ fn main() -> Result<(), String> {
         .with(Sprite { spritesheet: 0, region: Rect::new(0, 0, 30, 40), x_offset: -15, y_offset: -40})
         .with(player_animation)
         .with(Selectable{ width: 30, height: 40, x_offset: -15, y_offset: -40 })
-        .with(Turn{ current: false, priority: 1, actions: vec![ Action{ effects: vec![ActionEffect::Move] }, Action{ effects: vec![ActionEffect::Damage(1)] } ] })
+        .with(Turn{ current: false, priority: 1, actions: vec![ Action{ range: 5, effects: vec![ActionEffect::Move] }, Action{ range: 4, effects: vec![ActionEffect::Damage(1)] } ] })
         .with(Health{ health: 5, max_health: 5})
         .build();
 
@@ -169,7 +159,7 @@ fn main() -> Result<(), String> {
         .with(Sprite { spritesheet: 1, region: Rect::new(0, 0, 30, 40), x_offset: -15, y_offset: -40})
         .with(ai_animation)
         .with(Selectable{ width: 30, height: 40, x_offset: -15, y_offset: -40 })
-        .with(Turn{ current: false, priority: 2, actions: vec![ Action{ effects: vec![ActionEffect::Move] }, Action{ effects: vec![ActionEffect::Damage(2)] } ]  })
+        .with(Turn{ current: false, priority: 2, actions: vec![ Action{ range:5, effects: vec![ActionEffect::Move] }, Action{ range:10, effects: vec![ActionEffect::Damage(2)] } ]  })
         .with(Health{ health: 5, max_health: 5})
         .build();
 

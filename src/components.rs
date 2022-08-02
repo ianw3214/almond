@@ -2,7 +2,7 @@ use specs::prelude::*;
 use specs_derive::Component;
 use sdl2::rect::{Point, Rect};
 
-use crate::Action;
+use crate::gameplay::action::*;
 
 use std::time::Instant;
 
