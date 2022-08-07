@@ -3,6 +3,7 @@ use specs_derive::Component;
 use sdl2::rect::{Point, Rect};
 
 use crate::gameplay::action::*;
+use crate::gameplay::stats::*;
 
 use std::time::Instant;
 
@@ -71,4 +72,11 @@ pub struct Turn {
     pub current : bool,
     pub priority : i32,
     pub actions : Vec<Action>
+}
+
+// Stats ------------------------------------------
+#[derive(Component, Debug)]
+#[storage(VecStorage)]
+pub struct Stats {
+    pub stats : Vec<(Stat, i32)>
 }

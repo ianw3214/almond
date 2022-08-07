@@ -24,6 +24,7 @@ impl<'a> System<'a> for Mouse {
         // Components
         ReadStorage<'a, Selectable>,
         ReadStorage<'a, WorldPosition>,
+        ReadStorage<'a, Stats>,
         WriteStorage<'a, GridPosition>,
         WriteStorage<'a, Health>,
         WriteStorage<'a, Turn>
@@ -43,9 +44,10 @@ impl<'a> System<'a> for Mouse {
         // Components
         let selectables = &data.8;
         let world_positions = &data.9;
-        let grid_positions = &mut data.10;
-        let healths = &mut data.11;
-        let turns = &mut data.12;
+        let stats = &data.10;
+        let grid_positions = &mut data.11;
+        let healths = &mut data.12;
+        let turns = &mut data.13;
 
         // process UI actions
         // TODO: Handle all ui commands instead of just 1 per tick
@@ -63,6 +65,8 @@ impl<'a> System<'a> for Mouse {
             None => return
         };
 
+        // TODO: Investigate moving logic out of mouse
+        //  - Mouse creates 'actions' or 'tasks' that are handled by other systems maybe?
         // TODO: Make sure the entity only takes an action on its current turn
         //  - Need to handle differently if so
         let mut mouse_command_handled = false;
@@ -110,8 +114,17 @@ impl<'a> System<'a> for Mouse {
                                                         let sprite_y = world_pos.point.y + selectable.y_offset;
                                                         if x > sprite_x && x < sprite_x + selectable.width {
                                                             if y > sprite_y && y < sprite_y + selectable.height {
+                                                                let stats_data = stats.get(selected).unwrap();
+                                                                // TODO: There's gotta be a better way right?
+                                                                //  - Lots of cleanup to do here in any case
+                                                                let mut final_damage = 0;
+                                                                for stat in &stats_data.stats {
+                                                                    if stat.0 == damage.stat {
+                                                                        final_damage = stat.1 * damage.modifier as i32;
+                                                                    }
+                                                                }
                                                                 // TODO: Handle death...
-                                                                health.health = health.health - damage;
+                                                                health.health = health.health - final_damage;
                                                                 *current_action = CurrentAction::None;
                                                                 // end entity turn
                                                                 turn.current = false;

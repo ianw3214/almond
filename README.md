@@ -14,12 +14,13 @@ Some sort of TODO list:
     - [ ] Tweened movement system
   - [x] Basic entity attack
     - [x] Custom entity attacks
-    - [ ] Attack properties
-      - [ ] Range
+    - [x] Attack properties
+      - [ ] Range 
       - [ ] Custom effects (damage, heal, etc..)
   - [ ] Entity stats
   - [x] Turn ordering
   - [ ] Enemy AI
+  - [ ] Proper setup of entity properties
 - **RENDERING**
   - [x] Handle separation between view space & world space
   - [x] Basic camera system to handle scale

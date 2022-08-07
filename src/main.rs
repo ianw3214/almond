@@ -19,6 +19,7 @@ use std::time::Instant;
 
 use crate::components::*;
 use crate::gameplay::action::*;
+use crate::gameplay::stats::*;
 
 #[derive(Clone)]
 pub enum MouseCommand {
@@ -147,8 +148,9 @@ fn main() -> Result<(), String> {
         .with(Sprite { spritesheet: 0, region: Rect::new(0, 0, 30, 40), x_offset: -15, y_offset: -40})
         .with(player_animation)
         .with(Selectable{ width: 30, height: 40, x_offset: -15, y_offset: -40 })
-        .with(Turn{ current: false, priority: 1, actions: vec![ Action{ range: 5, effects: vec![ActionEffect::Move] }, Action{ range: 4, effects: vec![ActionEffect::Damage(1)] } ] })
+        .with(Turn{ current: false, priority: 1, actions: vec![ Action{ range: 5, effects: vec![ActionEffect::Move] }, Action{ range: 4, effects: vec![ActionEffect::Damage(StatModifier{ stat: Stat::STRENGTH, modifier: 1.0})] } ] })
         .with(Health{ health: 5, max_health: 5})
+        .with(Stats{ stats: vec![(Stat::STRENGTH, 1)] })
         .build();
 
     // Player 2
@@ -159,8 +161,9 @@ fn main() -> Result<(), String> {
         .with(Sprite { spritesheet: 1, region: Rect::new(0, 0, 30, 40), x_offset: -15, y_offset: -40})
         .with(ai_animation)
         .with(Selectable{ width: 30, height: 40, x_offset: -15, y_offset: -40 })
-        .with(Turn{ current: false, priority: 2, actions: vec![ Action{ range:5, effects: vec![ActionEffect::Move] }, Action{ range:10, effects: vec![ActionEffect::Damage(2)] } ]  })
+        .with(Turn{ current: false, priority: 2, actions: vec![ Action{ range:5, effects: vec![ActionEffect::Move] }, Action{ range:10, effects: vec![ActionEffect::Damage(StatModifier{ stat: Stat::STRENGTH, modifier: 2.0})] } ]  })
         .with(Health{ health: 5, max_health: 5})
+        .with(Stats{ stats: vec![(Stat::STRENGTH, 1)] })
         .build();
 
     // Tree
