@@ -1,23 +1,14 @@
+mod components;
+mod renderer;
+
 use specs::prelude::*;
-use specs_derive::Component;
 
 use sdl2::pixels::Color;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::image::{self, LoadTexture, InitFlag};
 
-mod renderer;
-
-#[derive(Component)]
-struct Position {
-    x: i32,
-    y: i32
-}
-
-#[derive(Component)]
-struct Renderable {
-    i: usize
-}
+use crate::components::*;
 
 struct State {
     ecs: World
@@ -66,6 +57,7 @@ fn main() {
                     break 'running
                 },
                 Event::MouseButtonDown { x, y, ..} => {
+                    println!("{}, {}", x, y);
                     // mouse_command = Some(MouseCommand::Click(Point::new(x, y)));
                 }
                 _ => {}
