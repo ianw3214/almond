@@ -1,5 +1,6 @@
 mod components;
 mod renderer;
+mod map;
 
 use specs::prelude::*;
 
@@ -9,6 +10,7 @@ use sdl2::keyboard::Keycode;
 use sdl2::image::{self, LoadTexture, InitFlag};
 
 use crate::components::*;
+use crate::map::*;
 
 struct State {
     ecs: World
@@ -31,8 +33,7 @@ fn main() {
 
     let textures = [
         texture_creator.load_texture("assets/villager.png").unwrap(),
-        texture_creator.load_texture("assets/villager2.png").unwrap(),
-        texture_creator.load_texture("assets/tree.png").unwrap()
+        texture_creator.load_texture("assets/grass.png").unwrap()
     ];
 
     let mut gs = State {
@@ -40,6 +41,9 @@ fn main() {
     };
     gs.ecs.register::<Position>();
     gs.ecs.register::<Renderable>();
+
+    // global resources
+    gs.ecs.insert(new_map());
 
     gs.ecs.create_entity()
         .with(Position{ x: 40, y: 25})
@@ -67,6 +71,8 @@ fn main() {
         // render
         canvas.clear(); 
 
+        render_map(&gs.ecs.fetch::<Vec<TileType>>(), &mut canvas, &textures);
+        
         renderer::render(&mut canvas, &textures, &gs.ecs);
         canvas.present();
     }
