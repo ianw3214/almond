@@ -11,3 +11,12 @@ pub struct Position {
 pub struct Renderable {
     pub i: usize
 }
+
+#[derive(Component)]
+pub struct Animatable {
+    // image data
+    pub width: i32,
+    pub height: i32,
+    // game data
+    pub frame: i32
+}

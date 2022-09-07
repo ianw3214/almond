@@ -33,7 +33,8 @@ fn main() {
 
     let textures = [
         texture_creator.load_texture("assets/villager.png").unwrap(),
-        texture_creator.load_texture("assets/grass.png").unwrap()
+        texture_creator.load_texture("assets/grass.png").unwrap(),
+        texture_creator.load_texture("assets/tree.png").unwrap()
     ];
 
     let mut gs = State {
@@ -41,6 +42,7 @@ fn main() {
     };
     gs.ecs.register::<Position>();
     gs.ecs.register::<Renderable>();
+    gs.ecs.register::<Animatable>();
 
     // global resources
     gs.ecs.insert(new_map());
@@ -48,6 +50,12 @@ fn main() {
     gs.ecs.create_entity()
         .with(Position{ x: 40, y: 25})
         .with(Renderable{ i : 0 })
+        .with(Animatable{ width: 30, height: 40, frame: 0 })
+        .build();
+    
+    gs.ecs.create_entity()
+        .with(Position{ x: 100, y: 100})
+        .with(Renderable{ i : 2})
         .build();
 
     canvas.set_draw_color(Color::RGB(64, 64, 255));
