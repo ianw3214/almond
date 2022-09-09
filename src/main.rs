@@ -36,7 +36,8 @@ fn main() {
         texture_creator.load_texture("assets/villager.png").unwrap(),
         texture_creator.load_texture("assets/grass.png").unwrap(),
         texture_creator.load_texture("assets/tree.png").unwrap(),
-        texture_creator.load_texture("assets/flint.png").unwrap()
+        texture_creator.load_texture("assets/flint.png").unwrap(),
+        texture_creator.load_texture("assets/water.png").unwrap()
     ];
 
     let mut gs = State {
