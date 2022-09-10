@@ -1,5 +1,4 @@
 use specs::prelude::*;
-// use rand::prelude::*;
 
 use crate::components::*;
 
@@ -19,14 +18,11 @@ impl<'a> System<'a> for AI {
     );
 
     fn run(&mut self, mut data : Self::SystemData) {
-        // let mut rng = thread_rng();
-
         // record moves to make at the end
-        let mut moves : Vec<(Entity, Entity)> = Vec::new();
         let mut collects : Vec<(Entity, Entity)> = Vec::new();
 
         // Let things with  brains try to collect resources
-        for (entity, brain, pos) in (&data.5, &mut data.0, &data.3).join() {
+        for (entity, brain, pos, movement) in (&data.5, &mut data.0, &data.3, &mut data.4).join() {
             match brain.curr_target {
                 Some(target) => {
                     // try to move to target and collect it
@@ -34,7 +30,8 @@ impl<'a> System<'a> for AI {
                     let dist = (pos.x - target_pos.x).abs() + (pos.y - target_pos.y).abs();
                     if dist > RESOURCE_DISTANCE_THRESHOLD {
                         // move to the resource
-                        moves.push((entity, target));
+                        let to = data.3.get(target).unwrap();
+                        movement.target = Some((to.x, to.y));
                     }
                     else {
                         // collect the resource
@@ -50,18 +47,6 @@ impl<'a> System<'a> for AI {
                     }
                 }
             }
-        }
-
-        // move entitites to targets
-        for pairs in moves {
-            let to = data.3.get(pairs.1).unwrap();
-            let target_x = to.x;
-            let target_y = to.y;
-            // let mut from = data.3.get_mut(pairs.0).unwrap();
-            // from.x = target_x;
-            // from.y = target_y;
-            let move_data = data.4.get_mut(pairs.0).unwrap();
-            move_data.target = Some((target_x, target_y));
         }
 
         // collect resource targets
