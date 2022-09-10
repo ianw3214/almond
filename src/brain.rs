@@ -13,6 +13,7 @@ impl<'a> System<'a> for AI {
         WriteStorage<'a, ResourceSource>,
         WriteStorage<'a, Inventory>,
         WriteStorage<'a, Position>,
+        WriteStorage<'a, Movement>,
         // List of all entities
         Entities<'a>
     );
@@ -25,7 +26,7 @@ impl<'a> System<'a> for AI {
         let mut collects : Vec<(Entity, Entity)> = Vec::new();
 
         // Let things with  brains try to collect resources
-        for (entity, brain, pos) in (&data.4, &mut data.0, &data.3).join() {
+        for (entity, brain, pos) in (&data.5, &mut data.0, &data.3).join() {
             match brain.curr_target {
                 Some(target) => {
                     // try to move to target and collect it
@@ -42,7 +43,7 @@ impl<'a> System<'a> for AI {
                 },
                 None => {
                     // try to find a target
-                    for (entity, source) in (&data.4, &mut data.1).join() {
+                    for (entity, source) in (&data.5, &mut data.1).join() {
                         if source.amount > 0 {
                             brain.curr_target = Some(entity);
                         }
@@ -56,9 +57,11 @@ impl<'a> System<'a> for AI {
             let to = data.3.get(pairs.1).unwrap();
             let target_x = to.x;
             let target_y = to.y;
-            let mut from = data.3.get_mut(pairs.0).unwrap();
-            from.x = target_x;
-            from.y = target_y;
+            // let mut from = data.3.get_mut(pairs.0).unwrap();
+            // from.x = target_x;
+            // from.y = target_y;
+            let move_data = data.4.get_mut(pairs.0).unwrap();
+            move_data.target = Some((target_x, target_y));
         }
 
         // collect resource targets
@@ -82,7 +85,7 @@ impl<'a> System<'a> for AI {
 
         // remove depleted resources
         for entity in removes {
-            data.4.delete(entity).expect("");
+            data.5.delete(entity).expect("");
         }
 
     }

@@ -2,6 +2,7 @@ mod components;
 mod renderer;
 mod map;
 mod brain;
+mod pathfinder;
 
 use specs::prelude::*;
 
@@ -49,9 +50,11 @@ fn main() {
     gs.ecs.register::<ResourceSource>();
     gs.ecs.register::<Brain>();
     gs.ecs.register::<Inventory>();
+    gs.ecs.register::<Movement>();
 
     let mut dispatcher = DispatcherBuilder::new()
         .with(brain::AI, "AI", &[])
+        .with(pathfinder::Pathfinder, "Pathfinder", &["AI"])
         .build();
     dispatcher.setup(&mut gs.ecs);
 
@@ -64,6 +67,7 @@ fn main() {
         .with(Animatable{ width: 30, height: 40, frame: 0 })
         .with(Brain{ curr_target: None })
         .with(Inventory{ resources: vec![ (ResourceType::WOOD, 0), (ResourceType::FLINT, 0)]})
+        .with(Movement{ speed : 1, target: None })
         .build();
     
     gs.ecs.create_entity()

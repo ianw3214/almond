@@ -42,3 +42,10 @@ pub struct Brain {
 pub struct Inventory {
     pub resources : Vec<(ResourceType, i32)>
 }
+
+#[derive(Component)]
+pub struct Movement {
+    pub speed : i32,
+    // game data
+    pub target : Option<(i32, i32)>
+}
