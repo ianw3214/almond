@@ -2,7 +2,7 @@ use specs::prelude::*;
 
 use crate::components::*;
 
-const RESOURCE_DISTANCE_THRESHOLD : i32 = 10;
+const DISTANCE_THRESHOLD : i32 = 10;
 
 pub struct AI;
 
@@ -10,6 +10,7 @@ impl<'a> System<'a> for AI {
     type SystemData = (
         WriteStorage<'a, Brain>,
         WriteStorage<'a, ResourceSource>,
+        WriteStorage<'a, ResourceStorage>,
         WriteStorage<'a, Inventory>,
         WriteStorage<'a, Position>,
         WriteStorage<'a, Movement>,
@@ -20,29 +21,52 @@ impl<'a> System<'a> for AI {
     fn run(&mut self, mut data : Self::SystemData) {
         // record moves to make at the end
         let mut collects : Vec<(Entity, Entity)> = Vec::new();
+        let mut stores : Vec<(Entity, Entity)> = Vec::new();
 
         // Let things with  brains try to collect resources
-        for (entity, brain, pos, movement) in (&data.5, &mut data.0, &data.3, &mut data.4).join() {
+        for (entity, brain, pos, movement) in (&data.6, &mut data.0, &data.4, &mut data.5).join() {
             match brain.curr_target {
                 Some(target) => {
-                    // try to move to target and collect it
-                    let target_pos = data.3.get(target).unwrap();
+                    // try to move to target and handle it
+                    let target_pos = data.4.get(target).unwrap();
                     let dist = (pos.x - target_pos.x).abs() + (pos.y - target_pos.y).abs();
-                    if dist > RESOURCE_DISTANCE_THRESHOLD {
+                    if dist > DISTANCE_THRESHOLD {
                         // move to the resource
-                        let to = data.3.get(target).unwrap();
-                        movement.target = Some((to.x, to.y));
+                        movement.target = Some((target_pos.x, target_pos.y));
                     }
                     else {
-                        // collect the resource
-                        collects.push((entity, target));
+                        match brain.task {
+                            TaskType::COLLECT => {
+                                // collect the resource
+                                collects.push((entity, target));
+                            },
+                            TaskType::STORE => {
+                                // store the resource
+                                stores.push((entity, target));
+                            }
+                        }
                     }
                 },
                 None => {
                     // try to find a target
-                    for (entity, source) in (&data.5, &mut data.1).join() {
+                    for (entity, source) in (&data.6, &mut data.1).join() {
                         if source.amount > 0 {
                             brain.curr_target = Some(entity);
+                            brain.task = TaskType::COLLECT;
+                        }
+                    }
+                    if let None = brain.curr_target {
+                        let inventory = data.3.get_mut(entity).unwrap();
+                        for resource in &inventory.resources {
+                            if resource.1 > 0 {
+                                // try to find a target if there are resources to store
+                                for (entity, _storage) in (&data.6, &mut data.2).join() {
+                                    // TODO: should also check that storage isn't full
+                                    brain.curr_target = Some(entity);
+                                    brain.task = TaskType::STORE;
+                                }
+                                break;
+                            }
                         }
                     }
                 }
@@ -52,7 +76,7 @@ impl<'a> System<'a> for AI {
         // collect resource targets
         let mut removes : Vec<Entity> = Vec::new();
         for pairs in collects {
-            let inv = data.2.get_mut(pairs.0).unwrap();
+            let inv = data.3.get_mut(pairs.0).unwrap();
             let mut src = data.1.get_mut(pairs.1).unwrap();
             for resources in &mut inv.resources {
                 if resources.0 == src.resource_type {
@@ -68,9 +92,32 @@ impl<'a> System<'a> for AI {
             }
         }
 
+        // store resource targets
+        for pairs in stores {
+            let inv = data.3.get_mut(pairs.0).unwrap();
+            let storage = data.2.get_mut(pairs.1).unwrap();
+            let mut handled = false;
+            for resources in &mut inv.resources {
+                if resources.1 <= 0 {
+                    continue;
+                }
+                handled = true;
+                for storage_resource in &mut storage.resources {
+                    if resources.0 == storage_resource.0 {
+                        resources.1 = resources.1 - 1;
+                        storage_resource.1 = storage_resource.1 + 1;
+                    }
+                }
+            }
+            if !handled {
+                let mut brain = data.0.get_mut(pairs.0).unwrap();
+                brain.curr_target = None;
+            }
+        }
+
         // remove depleted resources
         for entity in removes {
-            data.5.delete(entity).expect("");
+            data.6.delete(entity).expect("");
         }
 
     }

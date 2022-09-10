@@ -38,7 +38,8 @@ fn main() {
         texture_creator.load_texture("assets/grass.png").unwrap(),
         texture_creator.load_texture("assets/tree.png").unwrap(),
         texture_creator.load_texture("assets/flint.png").unwrap(),
-        texture_creator.load_texture("assets/water.png").unwrap()
+        texture_creator.load_texture("assets/water.png").unwrap(),
+        texture_creator.load_texture("assets/storage.png").unwrap()
     ];
 
     let mut gs = State {
@@ -65,7 +66,7 @@ fn main() {
         .with(Position{ x: 40, y: 25})
         .with(Renderable{ i : 0 })
         .with(Animatable{ width: 30, height: 40, frame: 0 })
-        .with(Brain{ curr_target: None })
+        .with(Brain{ curr_target: None, task : TaskType::COLLECT })
         .with(Inventory{ resources: vec![ (ResourceType::WOOD, 0), (ResourceType::FLINT, 0)]})
         .with(Movement{ speed : 1, target: None })
         .build();
@@ -80,6 +81,12 @@ fn main() {
         .with(Position {x: 200, y: 200})
         .with(Renderable{ i : 3})
         .with(ResourceSource{ amount: 10, resource_type: ResourceType::FLINT})
+        .build();
+
+    gs.ecs.create_entity()
+        .with(Position {x: 300, y: 300})
+        .with(Renderable{ i : 5})
+        .with(ResourceStorage{ resources:vec![ (ResourceType::WOOD, 0), (ResourceType::FLINT, 0)], max: 10})
         .build();
 
     canvas.set_draw_color(Color::RGB(64, 64, 255));

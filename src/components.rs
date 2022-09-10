@@ -7,6 +7,12 @@ pub enum ResourceType {
     FLINT
 }
 
+#[derive(Debug, PartialEq, Clone, Copy)]
+pub enum TaskType {
+    COLLECT,
+    STORE
+}
+
 #[derive(Component)]
 pub struct Position {
     pub x : i32,
@@ -34,8 +40,15 @@ pub struct ResourceSource {
 }
 
 #[derive(Component)]
+pub struct ResourceStorage {
+    pub resources : Vec<(ResourceType, i32)>,
+    pub max : i32
+}
+
+#[derive(Component)]
 pub struct Brain {
-    pub curr_target : Option<Entity>
+    pub curr_target : Option<Entity>,
+    pub task: TaskType
 }
 
 #[derive(Component)]
