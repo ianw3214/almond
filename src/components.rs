@@ -10,7 +10,8 @@ pub enum ResourceType {
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum TaskType {
     COLLECT,
-    STORE
+    STORE,
+    IDLE
 }
 
 #[derive(Component)]

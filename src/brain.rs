@@ -2,6 +2,8 @@ use specs::prelude::*;
 
 use crate::components::*;
 
+use rand::prelude::*;
+
 const DISTANCE_THRESHOLD : i32 = 10;
 
 pub struct AI;
@@ -43,16 +45,21 @@ impl<'a> System<'a> for AI {
                             TaskType::STORE => {
                                 // store the resource
                                 stores.push((entity, target));
+                            },
+                            TaskType::IDLE => {
+                                // Do nothing here...
                             }
                         }
                     }
                 },
                 None => {
+                    let mut should_idle = true;
                     // try to find a target
                     for (entity, source) in (&data.6, &mut data.1).join() {
                         if source.amount > 0 {
                             brain.curr_target = Some(entity);
                             brain.task = TaskType::COLLECT;
+                            should_idle = false;
                         }
                     }
                     if let None = brain.curr_target {
@@ -64,9 +71,21 @@ impl<'a> System<'a> for AI {
                                     // TODO: should also check that storage isn't full
                                     brain.curr_target = Some(entity);
                                     brain.task = TaskType::STORE;
+                                    should_idle = false;
                                 }
                                 break;
                             }
+                        }
+                    }
+                    if should_idle {
+                        // give the brain a 1 in 1000 chance to randomly move
+                        brain.task = TaskType::IDLE;
+                        let mut rng = thread_rng();
+                        let index = rng.gen_range(0..400);
+                        if index == 0 {
+                            let x_offset = rng.gen_range(0..30) - 15;
+                            let y_offset = rng.gen_range(0..30) - 15;
+                            movement.target = Some((pos.x + x_offset, pos.y + y_offset));
                         }
                     }
                 }
