@@ -66,7 +66,7 @@ fn main() {
         .with(Position{ x: 40, y: 25})
         .with(Renderable{ i : 0 })
         .with(Animatable{ width: 30, height: 40, frame: 0 })
-        .with(Brain{ curr_target: None, task : TaskType::COLLECT })
+        .with(Brain{ task : Task::IDLE })
         .with(Inventory{ resources: vec![ (ResourceType::WOOD, 0), (ResourceType::FLINT, 0)]})
         .with(Movement{ speed : 1, target: None })
         .build();

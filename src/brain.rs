@@ -27,61 +27,63 @@ impl<'a> System<'a> for AI {
 
         // Let things with  brains try to collect resources
         for (entity, brain, pos, movement) in (&data.6, &mut data.0, &data.4, &mut data.5).join() {
-            match brain.curr_target {
-                Some(target) => {
-                    // try to move to target and handle it
-                    let target_pos = data.4.get(target).unwrap();
-                    let dist = (pos.x - target_pos.x).abs() + (pos.y - target_pos.y).abs();
-                    if dist > DISTANCE_THRESHOLD {
-                        // move to the resource
-                        movement.target = Some((target_pos.x, target_pos.y));
-                    }
-                    else {
-                        match brain.task {
-                            TaskType::COLLECT => {
-                                // collect the resource
-                                collects.push((entity, target));
-                            },
-                            TaskType::STORE => {
-                                // store the resource
-                                stores.push((entity, target));
-                            },
-                            TaskType::IDLE => {
-                                // Do nothing here...
-                            }
+            match brain.task {
+                Task::COLLECT(target) => {
+                    if let Some(target) = target {
+                        // try to move to target and handle it
+                        let target_pos = data.4.get(target).unwrap();
+                        let dist = (pos.x - target_pos.x).abs() + (pos.y - target_pos.y).abs();
+                        if dist > DISTANCE_THRESHOLD {
+                            // move to the resource
+                            movement.target = Some((target_pos.x, target_pos.y));
+                        }
+                        else {
+                            collects.push((entity, target));
                         }
                     }
                 },
-                None => {
-                    let mut should_idle = true;
+                Task::STORE(target) => {
+                    if let Some(target) = target {
+                        // try to move to target and handle it
+                        let target_pos = data.4.get(target).unwrap();
+                        let dist = (pos.x - target_pos.x).abs() + (pos.y - target_pos.y).abs();
+                        if dist > DISTANCE_THRESHOLD {
+                            // move to the resource
+                            movement.target = Some((target_pos.x, target_pos.y));
+                        }
+                        else {
+                            stores.push((entity, target));
+                        }
+                    }
+                },
+                Task::IDLE => {
+                    let mut found_task = false;
                     // try to find a target
                     for (entity, source) in (&data.6, &mut data.1).join() {
                         if source.amount > 0 {
-                            brain.curr_target = Some(entity);
-                            brain.task = TaskType::COLLECT;
-                            should_idle = false;
+                            brain.task = Task::COLLECT(Some(entity));
+                            found_task = true;
                         }
                     }
-                    if let None = brain.curr_target {
+                    if !found_task {
                         let inventory = data.3.get_mut(entity).unwrap();
                         for resource in &inventory.resources {
                             if resource.1 > 0 {
                                 // try to find a target if there are resources to store
                                 for (entity, _storage) in (&data.6, &mut data.2).join() {
                                     // TODO: should also check that storage isn't full
-                                    brain.curr_target = Some(entity);
-                                    brain.task = TaskType::STORE;
-                                    should_idle = false;
+                                    brain.task = Task::STORE(Some(entity));
+                                    found_task = true;
                                 }
                                 break;
                             }
                         }
                     }
-                    if should_idle {
+                    if !found_task {
                         // give the brain a 1 in 1000 chance to randomly move
-                        brain.task = TaskType::IDLE;
+                        brain.task = Task::IDLE;
                         let mut rng = thread_rng();
-                        let index = rng.gen_range(0..400);
+                        let index : i32 = rng.gen_range(0..400);
                         if index == 0 {
                             let x_offset = rng.gen_range(0..30) - 15;
                             let y_offset = rng.gen_range(0..30) - 15;
@@ -105,7 +107,7 @@ impl<'a> System<'a> for AI {
                         // remove the resource if depleted
                         removes.push(pairs.1);
                         let mut brain = data.0.get_mut(pairs.0).unwrap();
-                        brain.curr_target = None;
+                        brain.task = Task::IDLE;
                     }
                 }
             }
@@ -130,7 +132,7 @@ impl<'a> System<'a> for AI {
             }
             if !handled {
                 let mut brain = data.0.get_mut(pairs.0).unwrap();
-                brain.curr_target = None;
+                brain.task = Task::IDLE;
             }
         }
 

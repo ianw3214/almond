@@ -8,9 +8,9 @@ pub enum ResourceType {
 }
 
 #[derive(Debug, PartialEq, Clone, Copy)]
-pub enum TaskType {
-    COLLECT,
-    STORE,
+pub enum Task {
+    COLLECT(Option<Entity>),
+    STORE(Option<Entity>),
     IDLE
 }
 
@@ -48,8 +48,7 @@ pub struct ResourceStorage {
 
 #[derive(Component)]
 pub struct Brain {
-    pub curr_target : Option<Entity>,
-    pub task: TaskType
+    pub task: Task
 }
 
 #[derive(Component)]
