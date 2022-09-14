@@ -31,45 +31,39 @@ impl<'a> System<'a> for AI {
         for (entity, brain, pos, movement) in (&data.7, &mut data.0, &data.4, &mut data.5).join() {
             match brain.task {
                 Task::COLLECT(target) => {
-                    if let Some(target) = target {
-                        // try to move to target and handle it
-                        let target_pos = data.4.get(target).unwrap();
-                        let dist = (pos.x - target_pos.x).abs() + (pos.y - target_pos.y).abs();
-                        if dist > DISTANCE_THRESHOLD {
-                            // move to the resource
-                            movement.target = Some((target_pos.x, target_pos.y));
-                        }
-                        else {
-                            collects.push((entity, target));
-                        }
+                    // try to move to target and handle it
+                    let target_pos = data.4.get(target).unwrap();
+                    let dist = (pos.x - target_pos.x).abs() + (pos.y - target_pos.y).abs();
+                    if dist > DISTANCE_THRESHOLD {
+                        // move to the resource
+                        movement.target = Some((target_pos.x, target_pos.y));
+                    }
+                    else {
+                        collects.push((entity, target));
                     }
                 },
                 Task::STORE(target) => {
-                    if let Some(target) = target {
-                        // try to move to target and handle it
-                        let target_pos = data.4.get(target).unwrap();
-                        let dist = (pos.x - target_pos.x).abs() + (pos.y - target_pos.y).abs();
-                        if dist > DISTANCE_THRESHOLD {
-                            // move to the resource
-                            movement.target = Some((target_pos.x, target_pos.y));
-                        }
-                        else {
-                            stores.push((entity, target));
-                        }
+                    // try to move to target and handle it
+                    let target_pos = data.4.get(target).unwrap();
+                    let dist = (pos.x - target_pos.x).abs() + (pos.y - target_pos.y).abs();
+                    if dist > DISTANCE_THRESHOLD {
+                        // move to the resource
+                        movement.target = Some((target_pos.x, target_pos.y));
+                    }
+                    else {
+                        stores.push((entity, target));
                     }
                 },
                 Task::BUILD(target) => {
-                    if let Some(target) = target {
-                        // try to move to target and handle it
-                        let target_pos = data.4.get(target).unwrap();
-                        let dist = (pos.x - target_pos.x).abs() + (pos.y - target_pos.y).abs();
-                        if dist > DISTANCE_THRESHOLD {
-                            // move to the resource
-                            movement.target = Some((target_pos.x, target_pos.y));
-                        }
-                        else {
-                            constructs.push((entity, target));
-                        }
+                    // try to move to target and handle it
+                    let target_pos = data.4.get(target).unwrap();
+                    let dist = (pos.x - target_pos.x).abs() + (pos.y - target_pos.y).abs();
+                    if dist > DISTANCE_THRESHOLD {
+                        // move to the resource
+                        movement.target = Some((target_pos.x, target_pos.y));
+                    }
+                    else {
+                        constructs.push((entity, target));
                     }
                 }
                 Task::IDLE => {

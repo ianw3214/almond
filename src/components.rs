@@ -9,9 +9,9 @@ pub enum ResourceType {
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum Task {
-    COLLECT(Option<Entity>),
-    STORE(Option<Entity>),
-    BUILD(Option<Entity>),
+    COLLECT(Entity),
+    STORE(Entity),
+    BUILD(Entity),
     IDLE
 }
 

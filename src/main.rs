@@ -7,6 +7,11 @@ mod scheduler;
 
 use specs::prelude::*;
 
+use sdl2::EventPump;
+use sdl2::render::WindowCanvas;
+use sdl2::render::TextureCreator;
+use sdl2::video::WindowContext;
+
 use sdl2::pixels::Color;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
@@ -19,7 +24,14 @@ struct State {
     ecs: World
 }
 
-fn main() {
+struct Engine {
+    canvas : WindowCanvas,
+    event_pump : EventPump,
+    texture_creator : TextureCreator<WindowContext>
+}
+
+fn init_engine() -> Engine {
+    // Initialize SDL and related subsystems
     let sdl_context = sdl2::init().unwrap();
     let video_subsystem = sdl_context.video().unwrap();
     let _image_context = image::init(InitFlag::PNG | InitFlag::JPG)
@@ -28,20 +40,31 @@ fn main() {
         .position_centered()
         .build()
         .expect("could not initialize video subsystem");
-    let mut canvas = window.into_canvas().build()
+    let canvas = window.into_canvas().build()
         .expect("could not make a canvas");
     let texture_creator = canvas.texture_creator();
-    let mut event_pump = sdl_context.event_pump()
+    let event_pump = sdl_context.event_pump()
         .expect("could not create event pump");
+    Engine {
+        canvas : canvas,
+        event_pump : event_pump,
+        texture_creator : texture_creator
+    }
+}
 
+fn main() {
+
+    let mut engine = init_engine();
+
+    // Initialize texture resources
     let textures = [
-        texture_creator.load_texture("assets/villager.png").unwrap(),
-        texture_creator.load_texture("assets/grass.png").unwrap(),
-        texture_creator.load_texture("assets/tree.png").unwrap(),
-        texture_creator.load_texture("assets/flint.png").unwrap(),
-        texture_creator.load_texture("assets/water.png").unwrap(),
-        texture_creator.load_texture("assets/storage.png").unwrap(),
-        texture_creator.load_texture("assets/house.png").unwrap()
+        engine.texture_creator.load_texture("assets/villager.png").unwrap(),
+        engine.texture_creator.load_texture("assets/grass.png").unwrap(),
+        engine.texture_creator.load_texture("assets/tree.png").unwrap(),
+        engine.texture_creator.load_texture("assets/flint.png").unwrap(),
+        engine.texture_creator.load_texture("assets/water.png").unwrap(),
+        engine.texture_creator.load_texture("assets/storage.png").unwrap(),
+        engine.texture_creator.load_texture("assets/house.png").unwrap()
     ];
 
     let mut gs = State {
@@ -91,13 +114,13 @@ fn main() {
 
     // global resources
     gs.ecs.insert(new_map());
-    gs.ecs.insert(vec![ Task::STORE(Some(store)), Task::COLLECT(Some(wood)), Task::COLLECT(Some(flint))]);
+    gs.ecs.insert(vec![ Task::STORE(store), Task::COLLECT(wood), Task::COLLECT(flint)]);
 
-    canvas.set_draw_color(Color::RGB(64, 64, 255));
+    engine.canvas.set_draw_color(Color::RGB(64, 64, 255));
 
     'running: loop {
         // handle events
-        for event in event_pump.poll_iter() {
+        for event in engine.event_pump.poll_iter() {
             match event {
                 Event::Quit { .. } |
                 Event::KeyDown { keycode: Some(Keycode::Escape), ..} => {
@@ -111,7 +134,7 @@ fn main() {
                         .build();
                     // Add a task to construct the building
                     let mut taskqueue = gs.ecs.write_resource::<Vec<Task>>();
-                    taskqueue.push(Task::BUILD(Some(building)));
+                    taskqueue.push(Task::BUILD(building));
                 }
                 _ => {}
             }
@@ -122,11 +145,11 @@ fn main() {
         gs.ecs.maintain();
 
         // render
-        canvas.clear(); 
+        engine.canvas.clear(); 
 
-        render_map(&gs.ecs.fetch::<Vec<TileType>>(), &mut canvas, &textures);
+        render_map(&gs.ecs.fetch::<Vec<TileType>>(), &mut engine.canvas, &textures);
         
-        renderer::render(&mut canvas, &textures, &gs.ecs);
-        canvas.present();
+        renderer::render(&mut engine.canvas, &textures, &gs.ecs);
+        engine.canvas.present();
     }
 }

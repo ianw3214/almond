@@ -11,3 +11,4 @@ To make SDL2 work on windows, [follow the instructions here](https://github.com/
 - [ ] UI system
   - [ ] load UI from json file (maybe? investigate)
 - [ ] Tech trees
+- [ ] Resource manager
