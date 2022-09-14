@@ -57,38 +57,14 @@ impl<'a> System<'a> for AI {
                     }
                 },
                 Task::IDLE => {
-                    let mut found_task = false;
-                    // try to find a target
-                    for (entity, source) in (&data.6, &mut data.1).join() {
-                        if source.amount > 0 {
-                            brain.task = Task::COLLECT(Some(entity));
-                            found_task = true;
-                        }
-                    }
-                    if !found_task {
-                        let inventory = data.3.get_mut(entity).unwrap();
-                        for resource in &inventory.resources {
-                            if resource.1 > 0 {
-                                // try to find a target if there are resources to store
-                                for (entity, _storage) in (&data.6, &mut data.2).join() {
-                                    // TODO: should also check that storage isn't full
-                                    brain.task = Task::STORE(Some(entity));
-                                    found_task = true;
-                                }
-                                break;
-                            }
-                        }
-                    }
-                    if !found_task {
-                        // give the brain a 1 in 1000 chance to randomly move
-                        brain.task = Task::IDLE;
-                        let mut rng = thread_rng();
-                        let index : i32 = rng.gen_range(0..400);
-                        if index == 0 {
-                            let x_offset = rng.gen_range(0..30) - 15;
-                            let y_offset = rng.gen_range(0..30) - 15;
-                            movement.target = Some((pos.x + x_offset, pos.y + y_offset));
-                        }
+                    // give the brain a 1 in 1000 chance to randomly move
+                    brain.task = Task::IDLE;
+                    let mut rng = thread_rng();
+                    let index : i32 = rng.gen_range(0..400);
+                    if index == 0 {
+                        let x_offset = rng.gen_range(0..30) - 15;
+                        let y_offset = rng.gen_range(0..30) - 15;
+                        movement.target = Some((pos.x + x_offset, pos.y + y_offset));
                     }
                 }
             }

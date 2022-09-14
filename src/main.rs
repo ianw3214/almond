@@ -3,6 +3,7 @@ mod renderer;
 mod map;
 mod brain;
 mod pathfinder;
+mod scheduler;
 
 use specs::prelude::*;
 
@@ -54,15 +55,13 @@ fn main() {
     gs.ecs.register::<Movement>();
 
     let mut dispatcher = DispatcherBuilder::new()
-        .with(brain::AI, "AI", &[])
+    .with(scheduler::Scheduler, "Scheduler", &[])
+        .with(brain::AI, "AI", &["Scheduler"])
         .with(pathfinder::Pathfinder, "Pathfinder", &["AI"])
         .build();
     dispatcher.setup(&mut gs.ecs);
 
-    // global resources
-    gs.ecs.insert(new_map());
-
-    gs.ecs.create_entity()
+    let _npc = gs.ecs.create_entity()
         .with(Position{ x: 40, y: 25})
         .with(Renderable{ i : 0 })
         .with(Animatable{ width: 30, height: 40, frame: 0 })
@@ -71,23 +70,27 @@ fn main() {
         .with(Movement{ speed : 1, target: None })
         .build();
     
-    gs.ecs.create_entity()
+    let wood = gs.ecs.create_entity()
         .with(Position{ x: 100, y: 100})
         .with(Renderable{ i : 2})
         .with(ResourceSource{ amount: 10, resource_type: ResourceType::WOOD})
         .build();
 
-    gs.ecs.create_entity()
+    let flint = gs.ecs.create_entity()
         .with(Position {x: 200, y: 200})
         .with(Renderable{ i : 3})
         .with(ResourceSource{ amount: 10, resource_type: ResourceType::FLINT})
         .build();
 
-    gs.ecs.create_entity()
+    let store = gs.ecs.create_entity()
         .with(Position {x: 300, y: 300})
         .with(Renderable{ i : 5})
         .with(ResourceStorage{ resources:vec![ (ResourceType::WOOD, 0), (ResourceType::FLINT, 0)], max: 10})
         .build();
+
+    // global resources
+    gs.ecs.insert(new_map());
+    gs.ecs.insert(vec![ Task::STORE(Some(store)), Task::COLLECT(Some(wood)), Task::COLLECT(Some(flint))]);
 
     canvas.set_draw_color(Color::RGB(64, 64, 255));
 
