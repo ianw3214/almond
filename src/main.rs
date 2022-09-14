@@ -40,7 +40,8 @@ fn main() {
         texture_creator.load_texture("assets/tree.png").unwrap(),
         texture_creator.load_texture("assets/flint.png").unwrap(),
         texture_creator.load_texture("assets/water.png").unwrap(),
-        texture_creator.load_texture("assets/storage.png").unwrap()
+        texture_creator.load_texture("assets/storage.png").unwrap(),
+        texture_creator.load_texture("assets/house.png").unwrap()
     ];
 
     let mut gs = State {
@@ -103,8 +104,14 @@ fn main() {
                     break 'running
                 },
                 Event::MouseButtonDown { x, y, ..} => {
-                    println!("{}, {}", x, y);
-                    // mouse_command = Some(MouseCommand::Click(Point::new(x, y)));
+                    let building = gs.ecs.create_entity()
+                        .with(Position{ x : x, y : y })
+                        .with(Renderable{ i : 6 })
+                        .with(Construction{ counter : 0 })
+                        .build();
+                    // Add a task to construct the building
+                    let mut taskqueue = gs.ecs.write_resource::<Vec<Task>>();
+                    taskqueue.push(Task::BUILD(Some(building)));
                 }
                 _ => {}
             }

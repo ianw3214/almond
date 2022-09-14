@@ -16,6 +16,7 @@ impl<'a> System<'a> for AI {
         WriteStorage<'a, Inventory>,
         WriteStorage<'a, Position>,
         WriteStorage<'a, Movement>,
+        WriteStorage<'a, Construction>,
         // List of all entities
         Entities<'a>
     );
@@ -24,9 +25,10 @@ impl<'a> System<'a> for AI {
         // record moves to make at the end
         let mut collects : Vec<(Entity, Entity)> = Vec::new();
         let mut stores : Vec<(Entity, Entity)> = Vec::new();
+        let mut constructs : Vec<(Entity, Entity)> = Vec::new();
 
         // Let things with  brains try to collect resources
-        for (entity, brain, pos, movement) in (&data.6, &mut data.0, &data.4, &mut data.5).join() {
+        for (entity, brain, pos, movement) in (&data.7, &mut data.0, &data.4, &mut data.5).join() {
             match brain.task {
                 Task::COLLECT(target) => {
                     if let Some(target) = target {
@@ -56,6 +58,20 @@ impl<'a> System<'a> for AI {
                         }
                     }
                 },
+                Task::BUILD(target) => {
+                    if let Some(target) = target {
+                        // try to move to target and handle it
+                        let target_pos = data.4.get(target).unwrap();
+                        let dist = (pos.x - target_pos.x).abs() + (pos.y - target_pos.y).abs();
+                        if dist > DISTANCE_THRESHOLD {
+                            // move to the resource
+                            movement.target = Some((target_pos.x, target_pos.y));
+                        }
+                        else {
+                            constructs.push((entity, target));
+                        }
+                    }
+                }
                 Task::IDLE => {
                     // give the brain a 1 in 1000 chance to randomly move
                     brain.task = Task::IDLE;
@@ -112,9 +128,20 @@ impl<'a> System<'a> for AI {
             }
         }
 
+        // construction targets
+        for pairs in constructs {
+            let construction = data.6.get_mut(pairs.1).unwrap();
+            construction.counter = construction.counter + 1;
+            if construction.counter > 100 {
+                let mut brain = data.0.get_mut(pairs.0).unwrap();
+                brain.task = Task::IDLE;
+                data.6.remove(pairs.1);
+            }
+        }
+
         // remove depleted resources
         for entity in removes {
-            data.6.delete(entity).expect("");
+            data.7.delete(entity).expect("");
         }
 
     }

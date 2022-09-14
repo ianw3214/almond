@@ -39,6 +39,11 @@ impl<'a> System<'a> for Scheduler {
                         taskqueue.pop();
                         break;
                     },
+                    Task::BUILD(_target) => {
+                        ai.task = *task;
+                        taskqueue.pop();
+                        break;
+                    }
                     Task::IDLE => {
                         // do nothing...
                     }

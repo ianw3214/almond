@@ -11,6 +11,7 @@ pub enum ResourceType {
 pub enum Task {
     COLLECT(Option<Entity>),
     STORE(Option<Entity>),
+    BUILD(Option<Entity>),
     IDLE
 }
 
@@ -61,4 +62,10 @@ pub struct Movement {
     pub speed : i32,
     // game data
     pub target : Option<(i32, i32)>
+}
+
+// TODO: This should be based on time and resources?
+#[derive(Component)]
+pub struct Construction {
+    pub counter : i32
 }
