@@ -4,6 +4,7 @@ mod map;
 mod brain;
 mod pathfinder;
 mod scheduler;
+mod hud;
 
 use specs::prelude::*;
 
@@ -67,6 +68,11 @@ fn main() {
         engine.texture_creator.load_texture("assets/house.png").unwrap()
     ];
 
+    let mut ui_textures = [
+        engine.texture_creator.load_texture("assets/ui/background.png").unwrap(),
+        engine.texture_creator.load_texture("assets/ui/build.png").unwrap()
+    ];
+
     let mut gs = State {
         ecs: World::new()
     };
@@ -118,6 +124,9 @@ fn main() {
 
     engine.canvas.set_draw_color(Color::RGB(64, 64, 255));
 
+    let mut ui_hud = hud::Hud{ controls : vec![] };
+    ui_hud.init();
+
     'running: loop {
         // handle events
         for event in engine.event_pump.poll_iter() {
@@ -125,6 +134,9 @@ fn main() {
                 Event::Quit { .. } |
                 Event::KeyDown { keycode: Some(Keycode::Escape), ..} => {
                     break 'running
+                },
+                Event::MouseMotion { x, y, ..} => {
+                    ui_hud.handle_mouse_motion(x, y);
                 },
                 Event::MouseButtonDown { x, y, ..} => {
                     let building = gs.ecs.create_entity()
@@ -150,6 +162,7 @@ fn main() {
         render_map(&gs.ecs.fetch::<Vec<TileType>>(), &mut engine.canvas, &textures);
         
         renderer::render(&mut engine.canvas, &textures, &gs.ecs);
+        ui_hud.render(&mut engine.canvas, &mut ui_textures, &gs.ecs);
         engine.canvas.present();
     }
 }
