@@ -5,40 +5,67 @@ use sdl2::render::{WindowCanvas, Texture};
 
 // use crate::components::*;
 
+#[derive(Clone, Copy)]
+pub enum UIEvent {
+    Build,
+    Collect
+}
+
 enum ButtonState {
     DEFAULT,
     HOVER
 }
 
-pub struct BackgroundData {
+struct BackgroundData {
     x : i32,
     y : i32,
     w : u32,
     h : u32
 }
 
-pub struct ButtonData {
+struct ButtonData {
     x : i32,
     y : i32,
     w : u32,
     h : u32,
     image : usize,
-    state : ButtonState
+    state : ButtonState,
+    event : UIEvent
 }
 
-pub enum UIElement {
+enum UIElement {
     Background(BackgroundData),
     Button(ButtonData)
 }
 
 pub struct Hud {
-    pub controls : Vec<UIElement>
+    controls : Vec<UIElement>
 }
 
 impl Hud {
+    pub fn new() -> Hud {
+        return Hud { controls : vec![] };
+    }
+    
     pub fn init(&mut self) {
         self.controls.push(UIElement::Background(BackgroundData{ x : 0, y : 0, w : 20, h : 720}));
-        self.controls.push(UIElement::Button(ButtonData{ x : 10, y : 10, w : 40, h : 40, image : 1, state : ButtonState::DEFAULT }));
+        self.controls.push(UIElement::Button(ButtonData{ x : 10, y : 10, w : 40, h : 40, image : 1, state : ButtonState::DEFAULT, event : UIEvent::Build }));
+        self.controls.push(UIElement::Button(ButtonData{ x : 10, y : 60, w : 40, h : 40, image : 2, state : ButtonState::DEFAULT, event : UIEvent::Collect }));
+    }
+
+    pub fn handle_mouse_click(&mut self, x : i32, y : i32, world: &mut World) -> bool{
+        for element in &mut self.controls {
+            if let UIElement::Button(data) = element {
+                if x > data.x && x < data.x + data.w as i32 {
+                    if y > data.y && y < data.y + data.h as i32 {
+                        let mut eventqueue = world.write_resource::<Vec<UIEvent>>();
+                        eventqueue.push(data.event);
+                        return true;
+                    }
+                }
+            }
+        }
+        false
     }
 
     pub fn handle_mouse_motion(&mut self, x : i32, y : i32) {

@@ -6,6 +6,7 @@ mod pathfinder;
 mod scheduler;
 mod hud;
 
+use hud::UIEvent;
 use specs::prelude::*;
 
 use sdl2::EventPump;
@@ -20,6 +21,12 @@ use sdl2::image::{self, LoadTexture, InitFlag};
 
 use crate::components::*;
 use crate::map::*;
+
+enum CursorState {
+    DEFAULT,
+    BUILD,
+    COLLECT
+}
 
 struct State {
     ecs: World
@@ -70,7 +77,8 @@ fn main() {
 
     let mut ui_textures = [
         engine.texture_creator.load_texture("assets/ui/background.png").unwrap(),
-        engine.texture_creator.load_texture("assets/ui/build.png").unwrap()
+        engine.texture_creator.load_texture("assets/ui/build.png").unwrap(),
+        engine.texture_creator.load_texture("assets/ui/collect.png").unwrap()    
     ];
 
     let mut gs = State {
@@ -121,10 +129,15 @@ fn main() {
     // global resources
     gs.ecs.insert(new_map());
     gs.ecs.insert(vec![ Task::STORE(store), Task::COLLECT(wood), Task::COLLECT(flint)]);
+    let eventqueue : Vec<hud::UIEvent> = Vec::new();
+    gs.ecs.insert(eventqueue);
+    
+    // This could eventually be a global resource?
+    let mut cursor_state : CursorState = CursorState::DEFAULT;
 
     engine.canvas.set_draw_color(Color::RGB(64, 64, 255));
 
-    let mut ui_hud = hud::Hud{ controls : vec![] };
+    let mut ui_hud = hud::Hud::new();
     ui_hud.init();
 
     'running: loop {
@@ -139,16 +152,49 @@ fn main() {
                     ui_hud.handle_mouse_motion(x, y);
                 },
                 Event::MouseButtonDown { x, y, ..} => {
-                    let building = gs.ecs.create_entity()
-                        .with(Position{ x : x, y : y })
-                        .with(Renderable{ i : 6 })
-                        .with(Construction{ counter : 0 })
-                        .build();
-                    // Add a task to construct the building
-                    let mut taskqueue = gs.ecs.write_resource::<Vec<Task>>();
-                    taskqueue.push(Task::BUILD(building));
+                    let handled = ui_hud.handle_mouse_click(x, y, &mut gs.ecs);
+                    if !handled {
+                        match cursor_state {
+                            CursorState::DEFAULT => {
+                                // do nothing...
+                            },
+                            CursorState::BUILD => {
+                                let building = gs.ecs.create_entity()
+                                    .with(Position{ x : x, y : y })
+                                    .with(Renderable{ i : 6 })
+                                    .with(Construction{ counter : 0 })
+                                    .build();
+                                // Add a task to construct the building
+                                let mut taskqueue = gs.ecs.write_resource::<Vec<Task>>();
+                                taskqueue.push(Task::BUILD(building));
+                                // reset the cursor state
+                                cursor_state = CursorState::DEFAULT;
+                            },
+                            CursorState::COLLECT => {
+
+                            }
+                        }
+                    }
                 }
                 _ => {}
+            }
+        }
+
+        // handle UI events
+        {
+            let mut eventqueue = gs.ecs.write_resource::<Vec<UIEvent>>();
+            let event = eventqueue.last();
+            if let Some(event) = event {
+                match event {
+                    UIEvent::Build => {
+                        cursor_state = CursorState::BUILD;
+                        eventqueue.pop();
+                    },
+                    UIEvent::Collect => {
+                        cursor_state = CursorState::COLLECT;
+                        eventqueue.pop();
+                    }
+                }
             }
         }
 
