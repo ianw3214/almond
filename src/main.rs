@@ -1,3 +1,4 @@
+mod engine;
 mod components;
 mod renderer;
 mod map;
@@ -9,15 +10,10 @@ mod hud;
 use hud::UIEvent;
 use specs::prelude::*;
 
-use sdl2::EventPump;
-use sdl2::render::WindowCanvas;
-use sdl2::render::TextureCreator;
-use sdl2::video::WindowContext;
-
 use sdl2::pixels::Color;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
-use sdl2::image::{self, LoadTexture, InitFlag};
+use sdl2::image::LoadTexture;
 
 use crate::components::*;
 use crate::map::*;
@@ -32,37 +28,9 @@ struct State {
     ecs: World
 }
 
-struct Engine {
-    canvas : WindowCanvas,
-    event_pump : EventPump,
-    texture_creator : TextureCreator<WindowContext>
-}
-
-fn init_engine() -> Engine {
-    // Initialize SDL and related subsystems
-    let sdl_context = sdl2::init().unwrap();
-    let video_subsystem = sdl_context.video().unwrap();
-    let _image_context = image::init(InitFlag::PNG | InitFlag::JPG)
-        .expect("Could not initialize image context");
-    let window = video_subsystem.window("game", 1280, 720)
-        .position_centered()
-        .build()
-        .expect("could not initialize video subsystem");
-    let canvas = window.into_canvas().build()
-        .expect("could not make a canvas");
-    let texture_creator = canvas.texture_creator();
-    let event_pump = sdl_context.event_pump()
-        .expect("could not create event pump");
-    Engine {
-        canvas : canvas,
-        event_pump : event_pump,
-        texture_creator : texture_creator
-    }
-}
-
 fn main() {
 
-    let mut engine = init_engine();
+    let mut engine = engine::engine::init_engine();
 
     // Initialize texture resources
     let textures = [
@@ -93,7 +61,7 @@ fn main() {
     gs.ecs.register::<Movement>();
 
     let mut dispatcher = DispatcherBuilder::new()
-    .with(scheduler::Scheduler, "Scheduler", &[])
+        .with(scheduler::Scheduler, "Scheduler", &[])
         .with(brain::AI, "AI", &["Scheduler"])
         .with(pathfinder::Pathfinder, "Pathfinder", &["AI"])
         .build();
@@ -108,19 +76,19 @@ fn main() {
         .with(Movement{ speed : 1, target: None })
         .build();
     
-    let wood = gs.ecs.create_entity()
+    let _wood = gs.ecs.create_entity()
         .with(Position{ x: 100, y: 100})
         .with(Renderable{ i : 2})
         .with(ResourceSource{ amount: 10, resource_type: ResourceType::WOOD})
         .build();
 
-    let flint = gs.ecs.create_entity()
+    let _flint = gs.ecs.create_entity()
         .with(Position {x: 200, y: 200})
         .with(Renderable{ i : 3})
         .with(ResourceSource{ amount: 10, resource_type: ResourceType::FLINT})
         .build();
 
-    let store = gs.ecs.create_entity()
+    let _store = gs.ecs.create_entity()
         .with(Position {x: 300, y: 300})
         .with(Renderable{ i : 5})
         .with(ResourceStorage{ resources:vec![ (ResourceType::WOOD, 0), (ResourceType::FLINT, 0)], max: 10})
@@ -128,7 +96,8 @@ fn main() {
 
     // global resources
     gs.ecs.insert(new_map());
-    gs.ecs.insert(vec![ Task::STORE(store), Task::COLLECT(wood), Task::COLLECT(flint)]);
+    let taskqueue : Vec<Task> = Vec::new();
+    gs.ecs.insert(taskqueue);
     let eventqueue : Vec<hud::UIEvent> = Vec::new();
     gs.ecs.insert(eventqueue);
     
@@ -154,6 +123,7 @@ fn main() {
                 Event::MouseButtonDown { x, y, ..} => {
                     let handled = ui_hud.handle_mouse_click(x, y, &mut gs.ecs);
                     if !handled {
+                        // TODO: Move this into a system?
                         match cursor_state {
                             CursorState::DEFAULT => {
                                 // do nothing...
@@ -171,7 +141,21 @@ fn main() {
                                 cursor_state = CursorState::DEFAULT;
                             },
                             CursorState::COLLECT => {
-
+                                let entities = gs.ecs.entities();
+                                let positions = gs.ecs.read_storage::<Position>();
+                                let resources = gs.ecs.read_storage::<ResourceSource>();
+                                // TODO: collision box data?
+                                for (entity, pos, _) in (&entities, &positions, &resources).join() {
+                                    if x > pos.x - 20 && x < pos.x + 20 {
+                                        if y > pos.y - 20 && y < pos.y + 20 {
+                                            let mut taskqueue = gs.ecs.write_resource::<Vec<Task>>();
+                                            taskqueue.push(Task::COLLECT(entity));
+                                        }
+                                    }
+                                }
+                                // reset the cursor state
+                                cursor_state = CursorState::DEFAULT;
+                                break;
                             }
                         }
                     }
