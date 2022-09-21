@@ -7,7 +7,6 @@ mod pathfinder;
 mod scheduler;
 mod hud;
 
-use hud::UIEvent;
 use specs::prelude::*;
 
 use sdl2::pixels::Color;
@@ -18,11 +17,18 @@ use sdl2::image::LoadTexture;
 use crate::components::*;
 use crate::map::*;
 
+use hud::UIEvent;
+
+use std::time::{SystemTime, UNIX_EPOCH};
+
 enum CursorState {
     DEFAULT,
     BUILD,
     COLLECT
 }
+
+#[derive(Default)]
+pub struct DeltaTime(f32);
 
 struct State {
     ecs: World
@@ -46,7 +52,9 @@ fn main() {
     let mut ui_textures = [
         engine.texture_creator.load_texture("assets/ui/background.png").unwrap(),
         engine.texture_creator.load_texture("assets/ui/build.png").unwrap(),
-        engine.texture_creator.load_texture("assets/ui/collect.png").unwrap()    
+        engine.texture_creator.load_texture("assets/ui/collect.png").unwrap(),
+        engine.texture_creator.load_texture("assets/ui/progress_bar.png").unwrap(),
+        engine.texture_creator.load_texture("assets/ui/progress_bar_bg.png").unwrap()
     ];
 
     let mut gs = State {
@@ -70,7 +78,7 @@ fn main() {
     let _npc = gs.ecs.create_entity()
         .with(Position{ x: 40, y: 25})
         .with(Renderable{ i : 0 })
-        .with(Animatable{ width: 30, height: 40, frame: 0 })
+        .with(Animatable{ width: 30, height: 40, frame: 0, timer: 0.0 })
         .with(Brain{ task : Task::IDLE })
         .with(Inventory{ resources: vec![ (ResourceType::WOOD, 0), (ResourceType::FLINT, 0)]})
         .with(Movement{ speed : 1, target: None })
@@ -95,6 +103,7 @@ fn main() {
         .build();
 
     // global resources
+    gs.ecs.insert(DeltaTime(33.3));
     gs.ecs.insert(new_map());
     let taskqueue : Vec<Task> = Vec::new();
     gs.ecs.insert(taskqueue);
@@ -110,6 +119,12 @@ fn main() {
     ui_hud.init();
 
     'running: loop {
+        // delta time
+        let curr = SystemTime::now();
+        let delta = curr.duration_since(engine.last_update).expect("Time went backwards...");
+        gs.ecs.insert(DeltaTime(delta.as_secs_f32()));
+        engine.last_update = curr;
+
         // handle events
         for event in engine.event_pump.poll_iter() {
             match event {
@@ -132,7 +147,7 @@ fn main() {
                                 let building = gs.ecs.create_entity()
                                     .with(Position{ x : x, y : y })
                                     .with(Renderable{ i : 6 })
-                                    .with(Construction{ counter : 0 })
+                                    .with(Construction{ timer : 10.0 })
                                     .build();
                                 // Add a task to construct the building
                                 let mut taskqueue = gs.ecs.write_resource::<Vec<Task>>();

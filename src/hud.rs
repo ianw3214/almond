@@ -3,7 +3,7 @@ use specs::prelude::*;
 use sdl2::rect::Rect;
 use sdl2::render::{WindowCanvas, Texture};
 
-// use crate::components::*;
+use crate::components::*;
 
 #[derive(Clone, Copy)]
 pub enum UIEvent {
@@ -81,7 +81,21 @@ impl Hud {
         }
     }
 
-    pub fn render(&self, canvas : &mut WindowCanvas, textures: &mut [Texture], _world: &World) {
+    pub fn render(&self, canvas : &mut WindowCanvas, textures: &mut [Texture], world: &World) {
+        // game entity hud data
+        let positions = world.read_storage::<Position>();
+        let constructions = world.read_storage::<Construction>();
+        for (pos, construction) in (&positions, &constructions).join() {
+            if construction.timer > 0.0 {
+                let filled = 1.0 - construction.timer / 10.0;
+                let bg_rect = Rect::new(pos.x, pos.y, 40, 10);
+                canvas.copy(&textures[4], None, bg_rect).expect("");
+                let filled_rect = Rect::new(pos.x, pos.y, (40.0 * filled) as u32, 10);
+                // filled portion
+                canvas.copy(&textures[3], None, filled_rect).expect("");
+            }
+        }
+        
         for element in &self.controls {
             match element {
                 UIElement::Background(data) => {

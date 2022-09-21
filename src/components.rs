@@ -32,7 +32,8 @@ pub struct Animatable {
     pub width : i32,
     pub height : i32,
     // game data
-    pub frame : i32
+    pub frame : i32,
+    pub timer : f32
 }
 
 #[derive(Component)]
@@ -67,5 +68,5 @@ pub struct Movement {
 // TODO: This should be based on time and resources?
 #[derive(Component)]
 pub struct Construction {
-    pub counter : i32
+    pub timer : f32
 }

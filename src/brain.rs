@@ -1,6 +1,7 @@
 use specs::prelude::*;
 
 use crate::components::*;
+use crate::DeltaTime;
 
 use rand::prelude::*;
 
@@ -18,7 +19,9 @@ impl<'a> System<'a> for AI {
         WriteStorage<'a, Movement>,
         WriteStorage<'a, Construction>,
         // List of all entities
-        Entities<'a>
+        Entities<'a>,
+        // Global resources
+        ReadExpect<'a, DeltaTime>
     );
 
     fn run(&mut self, mut data : Self::SystemData) {
@@ -125,8 +128,8 @@ impl<'a> System<'a> for AI {
         // construction targets
         for pairs in constructs {
             let construction = data.6.get_mut(pairs.1).unwrap();
-            construction.counter = construction.counter + 1;
-            if construction.counter > 100 {
+            construction.timer -= (&data.8).0;
+            if construction.timer <= 0.0 {
                 let mut brain = data.0.get_mut(pairs.0).unwrap();
                 brain.task = Task::IDLE;
                 data.6.remove(pairs.1);

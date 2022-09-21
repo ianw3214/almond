@@ -3,10 +3,14 @@ use sdl2::render::{TextureCreator, WindowCanvas};
 use sdl2::video::WindowContext;
 use sdl2::image::{self, InitFlag};
 
+use std::time::SystemTime;
+
 pub struct Engine {
     pub canvas : WindowCanvas,
     pub event_pump : EventPump,
-    pub texture_creator : TextureCreator<WindowContext>
+    pub texture_creator : TextureCreator<WindowContext>,
+
+    pub last_update : SystemTime
 }
 
 pub fn init_engine() -> Engine {
@@ -27,6 +31,7 @@ pub fn init_engine() -> Engine {
     Engine {
         canvas : canvas,
         event_pump : event_pump,
-        texture_creator : texture_creator
+        texture_creator : texture_creator,
+        last_update : SystemTime::now()
     }
 }
