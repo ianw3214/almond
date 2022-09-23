@@ -48,9 +48,9 @@ impl Hud {
     }
     
     pub fn init(&mut self) {
-        self.controls.push(UIElement::Background(BackgroundData{ x : 0, y : 0, w : 20, h : 720}));
-        self.controls.push(UIElement::Button(ButtonData{ x : 10, y : 10, w : 40, h : 40, image : 1, state : ButtonState::DEFAULT, event : UIEvent::Build }));
-        self.controls.push(UIElement::Button(ButtonData{ x : 10, y : 60, w : 40, h : 40, image : 2, state : ButtonState::DEFAULT, event : UIEvent::Collect }));
+        self.controls.push(UIElement::Background(BackgroundData{ x : 0, y : 0, w : 40, h : 720}));
+        self.controls.push(UIElement::Button(ButtonData{ x : 10, y : 10, w : 60, h : 60, image : 1, state : ButtonState::DEFAULT, event : UIEvent::Build }));
+        self.controls.push(UIElement::Button(ButtonData{ x : 10, y : 80, w : 60, h : 60, image : 2, state : ButtonState::DEFAULT, event : UIEvent::Collect }));
     }
 
     pub fn handle_mouse_click(&mut self, x : i32, y : i32, world: &mut World) -> bool{

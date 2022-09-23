@@ -15,6 +15,10 @@ use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::image::LoadTexture;
 
+// TEMP STUFF
+// TODO: REMOVE
+use sdl2::rect::Rect;
+
 use crate::components::*;
 use crate::map::*;
 
@@ -124,6 +128,14 @@ fn main() {
     let mut ui_hud = hud::Hud::new();
     ui_hud.init();
 
+    // TEST TEXT RENDERING
+    //  TODO: REMOVE
+    let font = engine.ttf_context.load_font("assets/fonts/Quicksand-VariableFont_wght.ttf", 32).expect("Font loading failed");
+    let surface = font.render("TEST TEXT!!").blended(Color::RGB(255, 255, 255)).expect("text render to surface failed");
+    let text_width = surface.width();
+    let text_height = surface.height();
+    let texture = engine.texture_creator.create_texture_from_surface(surface).expect("surface convert to texture failed");
+    
     'running: loop {
         // delta time
         let curr = SystemTime::now();
@@ -216,6 +228,10 @@ fn main() {
         render_map(&gs.ecs.fetch::<Vec<TileType>>(), &mut engine.canvas, &textures);
         
         debug::renderer::render(&mut engine.canvas, &gs.ecs);
+
+        // TEST TEXT RENDERING
+        //  TODO: REMOVE
+        engine.canvas.copy(&texture, None, Some(Rect::new(400, 400, text_width, text_height))).expect("");
 
         renderer::render(&mut engine.canvas, &textures, &gs.ecs);
         ui_hud.render(&mut engine.canvas, &mut ui_textures, &gs.ecs);
