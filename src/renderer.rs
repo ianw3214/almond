@@ -1,6 +1,6 @@
 use specs::prelude::*;
 
-use sdl2::rect::{Point, Rect};
+use sdl2::rect::Rect;
 use sdl2::render::{WindowCanvas, Texture};
 
 use crate::components::*;
@@ -29,7 +29,7 @@ pub fn render(canvas: &mut WindowCanvas, textures: &[Texture], world: &World) {
                 animatable.timer = 0.0;
             }
         }
-        let screen_rect = Rect::from_center(Point::new(pos.x, pos.y), 64, 64);
+        let screen_rect = Rect::new(pos.x, pos.y, 64, 64);
         canvas.copy(&textures[render.i], src_rect, screen_rect).expect("render copy failed...");
     }
 }

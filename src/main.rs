@@ -6,6 +6,7 @@ mod brain;
 mod pathfinder;
 mod scheduler;
 mod hud;
+mod debug;
 
 use specs::prelude::*;
 
@@ -19,7 +20,7 @@ use crate::map::*;
 
 use hud::UIEvent;
 
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::SystemTime;
 
 enum CursorState {
     DEFAULT,
@@ -67,6 +68,7 @@ fn main() {
     gs.ecs.register::<Brain>();
     gs.ecs.register::<Inventory>();
     gs.ecs.register::<Movement>();
+    gs.ecs.register::<BoundingBox>();
 
     let mut dispatcher = DispatcherBuilder::new()
         .with(scheduler::Scheduler, "Scheduler", &[])
@@ -82,24 +84,28 @@ fn main() {
         .with(Brain{ task : Task::IDLE })
         .with(Inventory{ resources: vec![ (ResourceType::WOOD, 0), (ResourceType::FLINT, 0)]})
         .with(Movement{ speed : 1, target: None })
+        .with(BoundingBox{ width : 30, height : 40, x_offset : 0, y_offset : 0 })
         .build();
     
     let _wood = gs.ecs.create_entity()
         .with(Position{ x: 100, y: 100})
         .with(Renderable{ i : 2})
         .with(ResourceSource{ amount: 10, resource_type: ResourceType::WOOD})
+        .with(BoundingBox{ width : 40, height : 40, x_offset : 0, y_offset : 0 })
         .build();
 
     let _flint = gs.ecs.create_entity()
         .with(Position {x: 200, y: 200})
         .with(Renderable{ i : 3})
         .with(ResourceSource{ amount: 10, resource_type: ResourceType::FLINT})
+        .with(BoundingBox{ width : 40, height : 40, x_offset : 0, y_offset : 0 })
         .build();
 
     let _store = gs.ecs.create_entity()
         .with(Position {x: 300, y: 300})
         .with(Renderable{ i : 5})
         .with(ResourceStorage{ resources:vec![ (ResourceType::WOOD, 0), (ResourceType::FLINT, 0)], max: 10})
+        .with(BoundingBox{ width : 40, height : 40, x_offset : 0, y_offset : 0 })
         .build();
 
     // global resources
@@ -159,10 +165,13 @@ fn main() {
                                 let entities = gs.ecs.entities();
                                 let positions = gs.ecs.read_storage::<Position>();
                                 let resources = gs.ecs.read_storage::<ResourceSource>();
+                                let aabbs = gs.ecs.read_storage::<BoundingBox>();
                                 // TODO: collision box data?
-                                for (entity, pos, _) in (&entities, &positions, &resources).join() {
-                                    if x > pos.x - 20 && x < pos.x + 20 {
-                                        if y > pos.y - 20 && y < pos.y + 20 {
+                                for (entity, pos, aabb, _) in (&entities, &positions, &aabbs, &resources).join() {
+                                    let pos_x = pos.x + aabb.x_offset;
+                                    let pos_y = pos.y + aabb.y_offset;
+                                    if x > pos_x && x < pos_x + aabb.width as i32 {
+                                        if y > pos_y && y < pos_y + aabb.height as i32 {
                                             let mut taskqueue = gs.ecs.write_resource::<Vec<Task>>();
                                             taskqueue.push(Task::COLLECT(entity));
                                         }
@@ -206,6 +215,8 @@ fn main() {
 
         render_map(&gs.ecs.fetch::<Vec<TileType>>(), &mut engine.canvas, &textures);
         
+        debug::renderer::render(&mut engine.canvas, &gs.ecs);
+
         renderer::render(&mut engine.canvas, &textures, &gs.ecs);
         ui_hud.render(&mut engine.canvas, &mut ui_textures, &gs.ecs);
         engine.canvas.present();

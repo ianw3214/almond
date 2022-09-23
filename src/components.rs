@@ -7,7 +7,8 @@ pub enum ResourceType {
     FLINT
 }
 
-#[derive(Debug, PartialEq, Clone, Copy)]
+// #[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(PartialEq, Clone, Copy)]
 pub enum Task {
     COLLECT(Entity),
     STORE(Entity),
@@ -69,4 +70,12 @@ pub struct Movement {
 #[derive(Component)]
 pub struct Construction {
     pub timer : f32
+}
+
+#[derive(Component)]
+pub struct BoundingBox {
+    pub width : u32,
+    pub height : u32,
+    pub x_offset : i32,
+    pub y_offset : i32
 }
