@@ -8,7 +8,9 @@ To make SDL2_ttf work, follow the same instructions but for the [SDL2 ttf librar
 
 ## Some sort of TODOs
 
-- [ ] Buildings
+- [x] Buildings
+  - [ ] separate construction sprites
+  - [ ] construction highlight
 - [ ] map generation (tiles)
 - [ ] resource system (game)
 - [ ] UI system
@@ -21,9 +23,10 @@ To make SDL2_ttf work, follow the same instructions but for the [SDL2 ttf librar
 - [x] Delta time management
 - [ ] testing????
 - [ ] collisions
+  - [ ] seperate collision box vs 'selection' box
 - [ ] camera system
 - [ ] serialization
   - [ ] game state serialization
   - [ ] component serialization
-- [ ] rendering order
+- [x] rendering order
 - [ ] text rendering

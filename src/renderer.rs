@@ -8,11 +8,21 @@ use crate::DeltaTime;
 
 const TILES_ACROSS: i32 = 4;
 
+struct RenderTarget {
+    y: i32,
+    src: Option<Rect>,
+    dst: Rect,
+    texture_index: usize
+}
+
 pub fn render(canvas: &mut WindowCanvas, textures: &[Texture], world: &World) {
     let positions = world.read_storage::<Position>();
     let renderables = world.read_storage::<Renderable>();
     let mut animatables = world.write_storage::<Animatable>();
     let delta = world.read_resource::<DeltaTime>();
+
+    // TODO: Priority queue/more efficient way to render
+    let mut render_targets : Vec<RenderTarget> = Vec::new();
 
     for (pos, render, animatable) in (&positions, &renderables, (&mut animatables).maybe()).join() {
         let mut src_rect: Option<Rect> = None;
@@ -30,6 +40,12 @@ pub fn render(canvas: &mut WindowCanvas, textures: &[Texture], world: &World) {
             }
         }
         let screen_rect = Rect::new(pos.x, pos.y, 64, 64);
-        canvas.copy(&textures[render.i], src_rect, screen_rect).expect("render copy failed...");
+        render_targets.push(RenderTarget{ y : screen_rect.y, src : src_rect, dst : screen_rect, texture_index : render.i });
     }
+
+    render_targets.sort_by(|a, b| a.y.cmp(&b.y));
+    for target in render_targets {
+        canvas.copy(&textures[target.texture_index], target.src, target.dst).expect("render copy failed...");
+    }
+
 }
