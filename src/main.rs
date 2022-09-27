@@ -8,6 +8,7 @@ mod scheduler;
 mod hud;
 mod debug;
 
+use sdl2::pixels::PixelFormatEnum;
 use specs::prelude::*;
 
 use sdl2::pixels::Color;
@@ -21,6 +22,11 @@ use crate::map::*;
 use hud::UIEvent;
 
 use std::time::SystemTime;
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// test text rendering
+use ab_glyph::{FontRef, Font, Glyph, point};
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 enum CursorState {
     DEFAULT,
@@ -126,21 +132,30 @@ fn main() {
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // test text rendering
-    let width = 100;
-    let height = 100;
-    let mut texture = engine.texture_creator.create_texture(None, sdl2::render::TextureAccess::Static, width, height).expect("Texture creation failed...");
-    let mut pixel_data = vec![b'\0'; (width * height * 4) as usize];
-    for y in 0..height {
-        let grayscale = (y as f32 / height as f32 * 255.0) as u8;
-        for x in 0..width {
+    let font = FontRef::try_from_slice(include_bytes!("../assets/fonts/SecularOne-Regular.ttf")).expect("font loading failed..");
+
+    // Get a glyph for 'A' with a scale & position.
+    let glyph : Glyph = font.glyph_id('A').with_scale(32.0);
+
+    // Draw it.
+    let width = glyph.scale.x as u32;
+    let height = glyph.scale.y as u32;
+    let mut pixel_data = vec![0; (width * height * 4) as usize];
+    if let Some(a) = font.outline_glyph(glyph) {
+        a.draw(|x, y, c| {
+            /* draw pixel `(x, y)` with coverage: `c` */
+            let coverage = (c * 255.0) as u8;
             let start_index = ((y * width + x) * 4) as usize;
-            pixel_data[start_index] = grayscale;
-            pixel_data[start_index + 1] = grayscale;
-            pixel_data[start_index + 2] = grayscale;
-            pixel_data[start_index + 3] = 255;
-        }
+            pixel_data[start_index] = coverage;
+            pixel_data[start_index + 1] = coverage;
+            pixel_data[start_index + 2] = coverage;
+            pixel_data[start_index + 3] = coverage;
+        });
     }
+
+    let mut texture = engine.texture_creator.create_texture(PixelFormatEnum::RGBA32, sdl2::render::TextureAccess::Static, width, height).expect("Texture creation failed...");
     texture.update(None, &pixel_data, 4 * width as usize).expect("texture update failed");
+    texture.set_blend_mode(sdl2::render::BlendMode::Add);
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     'running: loop {

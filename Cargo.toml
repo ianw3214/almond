@@ -9,6 +9,7 @@ edition = "2021"
 specs = "*"
 specs-derive = "*"
 rand = "*"
+ab_glyph = "*"
 
 [dependencies.sdl2]
 version = "*"
