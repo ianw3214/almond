@@ -126,7 +126,21 @@ fn main() {
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // test text rendering
-    
+    let width = 100;
+    let height = 100;
+    let mut texture = engine.texture_creator.create_texture(None, sdl2::render::TextureAccess::Static, width, height).expect("Texture creation failed...");
+    let mut pixel_data = vec![b'\0'; (width * height * 4) as usize];
+    for y in 0..height {
+        let grayscale = (y as f32 / height as f32 * 255.0) as u8;
+        for x in 0..width {
+            let start_index = ((y * width + x) * 4) as usize;
+            pixel_data[start_index] = grayscale;
+            pixel_data[start_index + 1] = grayscale;
+            pixel_data[start_index + 2] = grayscale;
+            pixel_data[start_index + 3] = 255;
+        }
+    }
+    texture.update(None, &pixel_data, 4 * width as usize).expect("texture update failed");
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     'running: loop {
@@ -221,6 +235,12 @@ fn main() {
         render_map(&gs.ecs.fetch::<Vec<TileType>>(), &mut engine.canvas, &textures);
         
         debug::renderer::render(&mut engine.canvas, &gs.ecs);
+
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        // test text rendering
+        let dst_rect = sdl2::rect::Rect::new(400, 400, width, height);
+        engine.canvas.copy(&texture, None, dst_rect).expect("text rendering failed");
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
         renderer::render(&mut engine.canvas, &textures, &gs.ecs);
         ui_hud.render(&mut engine.canvas, &mut ui_textures, &gs.ecs);
