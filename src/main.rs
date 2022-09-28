@@ -27,6 +27,30 @@ use std::time::SystemTime;
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // test text rendering
 use ab_glyph::{FontRef, Font, Glyph, point};
+
+fn layout(font : &FontRef, scale : f32, message : &str) -> Vec<Glyph> {
+    let font = font.as_scaled(scale);
+
+    let mut caret = point(0.0, font.ascent());
+    let mut last_glyph: Option<Glyph> = None;
+    let mut target = Vec::new();
+    for c in message.chars() {
+        if c.is_control() {
+            continue;
+        }
+        let mut glyph = font.scaled_glyph(c);
+        if let Some(previous) = last_glyph.take() {
+            caret.x += font.kern(previous.id, glyph.id);
+        }
+        glyph.position = caret;
+
+        last_glyph = Some(glyph.clone());
+        caret.x += font.h_advance(glyph.id);
+
+        target.push(glyph);
+    }
+    target
+}
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 enum CursorState {
@@ -136,35 +160,31 @@ fn main() {
     let font = FontRef::try_from_slice(include_bytes!("../assets/fonts/SecularOne-Regular.ttf")).expect("font loading failed..");
     let scale : f32 = 32.0;
 
-    let mut width = 0;
-    let height = scale as u32;
-    let draw_string = "Hello World!";
-    for char in draw_string.chars() {
-        let id = font.glyph_id(char);
-        width = width + font.as_scaled(scale).h_advance(id) as u32;
-    }
+    let message = "Hello World!";
+    let glyphs = layout(&font, scale, message);
 
-    let mut curr_x = 0;
+    let last_glyph = glyphs.last().unwrap();
+    let width = (last_glyph.position.x + font.as_scaled(scale).h_advance(last_glyph.id)).ceil() as u32;
+    let height = font.as_scaled(scale).height().ceil() as u32;
+
     let mut pixel_data = vec![0; (width * height * 4) as usize];
-    for char in draw_string.chars() {
-        let id = font.glyph_id(char);
-        let glyph = id.with_scale_and_position(scale, point(curr_x as f32, 0.0));
-        if let Some(a) = font.outline_glyph(glyph) {
-            curr_x = curr_x + font.as_scaled(scale).h_advance(id) as u32;
-            a.draw(|x, y, c| {
-                // "with_scale_and_position" doesn't seem to work so x is manually adjusted here
-                let new_x = x + curr_x;
-                /* draw pixel `(x, y)` with coverage: `c` */
+    for glyph in glyphs {
+        if let Some(outline) = font.outline_glyph(glyph) {
+            let bounds = outline.px_bounds();
+            let left = bounds.min.x as u32;
+            let top = bounds.min.y as u32;
+            outline.draw(|x, y, c| {
+                let actual_x = left + x;
+                let actual_y = top + y;
                 let coverage = (c * 255.0) as u8;
-                let start_index = ((y * width + new_x) * 4) as usize;
+                let start_index = ((actual_y * width + actual_x) * 4) as usize;
                 pixel_data[start_index] = coverage;
                 pixel_data[start_index + 1] = coverage;
                 pixel_data[start_index + 2] = coverage;
                 pixel_data[start_index + 3] = coverage;
-            });
+            })
         }
     }
-
     let mut texture = engine.texture_creator.create_texture(PixelFormatEnum::RGBA32, sdl2::render::TextureAccess::Static, width, height).expect("Texture creation failed...");
     texture.update(None, &pixel_data, 4 * width as usize).expect("texture update failed");
     texture.set_blend_mode(sdl2::render::BlendMode::Add);
