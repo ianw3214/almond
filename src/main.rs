@@ -8,6 +8,7 @@ mod scheduler;
 mod hud;
 mod debug;
 
+use ab_glyph::ScaleFont;
 use sdl2::pixels::PixelFormatEnum;
 use specs::prelude::*;
 
@@ -133,24 +134,35 @@ fn main() {
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // test text rendering
     let font = FontRef::try_from_slice(include_bytes!("../assets/fonts/SecularOne-Regular.ttf")).expect("font loading failed..");
+    let scale : f32 = 32.0;
 
-    // Get a glyph for 'A' with a scale & position.
-    let glyph : Glyph = font.glyph_id('A').with_scale(32.0);
+    let mut width = 0;
+    let height = scale as u32;
+    let draw_string = "Hello World!";
+    for char in draw_string.chars() {
+        let id = font.glyph_id(char);
+        width = width + font.as_scaled(scale).h_advance(id) as u32;
+    }
 
-    // Draw it.
-    let width = glyph.scale.x as u32;
-    let height = glyph.scale.y as u32;
+    let mut curr_x = 0;
     let mut pixel_data = vec![0; (width * height * 4) as usize];
-    if let Some(a) = font.outline_glyph(glyph) {
-        a.draw(|x, y, c| {
-            /* draw pixel `(x, y)` with coverage: `c` */
-            let coverage = (c * 255.0) as u8;
-            let start_index = ((y * width + x) * 4) as usize;
-            pixel_data[start_index] = coverage;
-            pixel_data[start_index + 1] = coverage;
-            pixel_data[start_index + 2] = coverage;
-            pixel_data[start_index + 3] = coverage;
-        });
+    for char in draw_string.chars() {
+        let id = font.glyph_id(char);
+        let glyph = id.with_scale_and_position(scale, point(curr_x as f32, 0.0));
+        if let Some(a) = font.outline_glyph(glyph) {
+            curr_x = curr_x + font.as_scaled(scale).h_advance(id) as u32;
+            a.draw(|x, y, c| {
+                // "with_scale_and_position" doesn't seem to work so x is manually adjusted here
+                let new_x = x + curr_x;
+                /* draw pixel `(x, y)` with coverage: `c` */
+                let coverage = (c * 255.0) as u8;
+                let start_index = ((y * width + new_x) * 4) as usize;
+                pixel_data[start_index] = coverage;
+                pixel_data[start_index + 1] = coverage;
+                pixel_data[start_index + 2] = coverage;
+                pixel_data[start_index + 3] = coverage;
+            });
+        }
     }
 
     let mut texture = engine.texture_creator.create_texture(PixelFormatEnum::RGBA32, sdl2::render::TextureAccess::Static, width, height).expect("Texture creation failed...");
