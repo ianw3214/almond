@@ -8,16 +8,13 @@ mod scheduler;
 mod hud;
 mod debug;
 
+use sdl2::pixels::PixelFormatEnum;
 use specs::prelude::*;
 
 use sdl2::pixels::Color;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::image::LoadTexture;
-
-// TEMP STUFF
-// TODO: REMOVE
-use sdl2::rect::Rect;
 
 use crate::components::*;
 use crate::map::*;
@@ -128,14 +125,17 @@ fn main() {
     let mut ui_hud = hud::Hud::new();
     ui_hud.init();
 
-    // TEST TEXT RENDERING
-    //  TODO: REMOVE
-    let font = engine.ttf_context.load_font("assets/fonts/Quicksand-VariableFont_wght.ttf", 32).expect("Font loading failed");
-    let surface = font.render("TEST TEXT!!").blended(Color::RGB(255, 255, 255)).expect("text render to surface failed");
-    let text_width = surface.width();
-    let text_height = surface.height();
-    let texture = engine.texture_creator.create_texture_from_surface(surface).expect("surface convert to texture failed");
-    
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // test text rendering
+    let scale : f32 = 32.0;
+    let message = "Hello World!";
+
+    let (width, height, pixel_data) = engine.text.layout_data(message, scale);
+    let mut texture = engine.texture_creator.create_texture(PixelFormatEnum::RGBA32, sdl2::render::TextureAccess::Static, width, height).expect("Texture creation failed...");
+    texture.update(None, &pixel_data, 4 * width as usize).expect("texture update failed");
+    texture.set_blend_mode(sdl2::render::BlendMode::Add);
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     'running: loop {
         // delta time
         let curr = SystemTime::now();
@@ -229,9 +229,11 @@ fn main() {
         
         debug::renderer::render(&mut engine.canvas, &gs.ecs);
 
-        // TEST TEXT RENDERING
-        //  TODO: REMOVE
-        engine.canvas.copy(&texture, None, Some(Rect::new(400, 400, text_width, text_height))).expect("");
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        // test text rendering
+        let dst_rect = sdl2::rect::Rect::new(400, 400, width, height);
+        engine.canvas.copy(&texture, None, dst_rect).expect("text rendering failed");
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
         renderer::render(&mut engine.canvas, &textures, &gs.ecs);
         ui_hud.render(&mut engine.canvas, &mut ui_textures, &gs.ecs);
