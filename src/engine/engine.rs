@@ -5,10 +5,14 @@ use sdl2::image::{self, InitFlag};
 
 use std::time::SystemTime;
 
+use crate::engine::text::*;
+
 pub struct Engine {
     pub canvas : WindowCanvas,
     pub event_pump : EventPump,
     pub texture_creator : TextureCreator<WindowContext>,
+
+    pub text : TextEngine,
 
     pub last_update : SystemTime
 }
@@ -29,10 +33,13 @@ pub fn init_engine() -> Engine {
     let event_pump = sdl_context.event_pump()
         .expect("could not create event pump");
 
+    let text = TextEngine::new();
+
     Engine {
         canvas : canvas,
         event_pump : event_pump,
         texture_creator : texture_creator,
+        text : text,
         last_update : SystemTime::now()
     }
 }
