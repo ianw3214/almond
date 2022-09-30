@@ -135,5 +135,31 @@ impl Hud {
                 }
             }
         }
+
+        // text showing current resources
+        //  TODO: Convert to UI Element for rendering
+        let storages = world.read_storage::<ResourceStorage>();
+        let inventories = world.read_storage::<Inventory>();
+        let mut resources : Vec<(ResourceType, i32)> = vec![ (ResourceType::WOOD, 0), (ResourceType::FLINT, 0)];
+        let mut add_to_resources = |t : ResourceType, n : i32| {
+            for resource in &mut resources {
+                if resource.0 == t {
+                    resource.1 = resource.1 + n;
+                }
+            }
+        };
+        for storage in (&storages).join() {
+            for resource in &storage.resources {
+                add_to_resources(resource.0, resource.1);
+            }
+        }
+        for inventory in (&inventories).join() {
+            for resource in &inventory.resources {
+                add_to_resources(resource.0, resource.1);
+            }
+        }
+
+        // actual resource rendering
+        // TODO: How to render text here?
     }
 }

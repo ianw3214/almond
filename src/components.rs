@@ -1,7 +1,7 @@
 use specs::prelude::*;
 use specs_derive::Component;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub enum ResourceType {
     WOOD,
     FLINT
