@@ -15,8 +15,8 @@ To make SDL2 work on windows, [follow the instructions here](https://github.com/
   - [ ] load UI from json file (maybe? investigate)
   - [ ] scaling system for consistency
 - [ ] Tech trees
-- [ ] Resource manager (engine)
-  - [ ] texture loading
+- [x] Resource manager (engine)
+  - [x] texture loading
   - [ ] font engine
 - [x] Delta time management
 - [ ] testing????

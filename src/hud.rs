@@ -1,9 +1,12 @@
+use sdl2::pixels::PixelFormatEnum;
 use specs::prelude::*;
 
 use sdl2::rect::Rect;
-use sdl2::render::{WindowCanvas, Texture};
+use sdl2::render::{WindowCanvas};
 
 use crate::components::*;
+use crate::engine::resource::TextureManager;
+use crate::engine::text::TextEngine;
 
 #[derive(Clone, Copy)]
 pub enum UIEvent {
@@ -81,7 +84,7 @@ impl Hud {
         }
     }
 
-    pub fn render(&self, canvas : &mut WindowCanvas, textures: &mut [Texture], world: &World) {
+    pub fn render(&self, canvas : &mut WindowCanvas, textures: &mut TextureManager, text_engine: &TextEngine, world: &World) {
         // game entity hud data
         let positions = world.read_storage::<Position>();
         let constructions = world.read_storage::<Construction>();
@@ -89,10 +92,10 @@ impl Hud {
             if construction.timer > 0.0 {
                 let filled = 1.0 - construction.timer / 10.0;
                 let bg_rect = Rect::new(pos.x, pos.y, 40, 10);
-                canvas.copy(&textures[4], None, bg_rect).expect("");
+                canvas.copy(&textures.textures[4], None, bg_rect).expect("");
                 let filled_rect = Rect::new(pos.x, pos.y, (40.0 * filled) as u32, 10);
                 // filled portion
-                canvas.copy(&textures[3], None, filled_rect).expect("");
+                canvas.copy(&textures.textures[3], None, filled_rect).expect("");
             }
         }
         
@@ -103,7 +106,7 @@ impl Hud {
                     assert!(data.w >= 20, "Background width is less than required minimum of 20");
                     assert!(data.h >= 20, "Background height is less than required minimum of 20");
                     let mut render_part = | src : Rect, dst : Rect | {
-                        canvas.copy(&textures[0], src, dst).expect("render copy failed...");
+                        canvas.copy(&textures.textures[0], src, dst).expect("render copy failed...");
                     };
                     // top left
                     render_part(Rect::new(0, 0, 10, 10), Rect::new(data.x, data.y, 10, 10));
@@ -130,8 +133,8 @@ impl Hud {
                         ButtonState::DEFAULT => 255,
                         ButtonState::HOVER => 100
                     };
-                    textures[data.image].set_color_mod(tint, tint, tint);
-                    canvas.copy(&textures[data.image], None, screen_rect).expect("render copy failed...");
+                    textures.textures[data.image].set_color_mod(tint, tint, tint);
+                    canvas.copy(&textures.textures[data.image], None, screen_rect).expect("render copy failed...");
                 }
             }
         }
@@ -160,6 +163,17 @@ impl Hud {
         }
 
         // actual resource rendering
-        // TODO: How to render text here?
+        let scale : f32 = 32.0;
+        let mut draw_text = |message : &str, x : i32, y : i32| {
+            let (width, height, pixel_data) = text_engine.layout_data(message, scale);
+            let mut texture = textures.creator.create_texture(PixelFormatEnum::RGBA32, sdl2::render::TextureAccess::Static, width, height).expect("Texture creation failed...");
+            texture.update(None, &pixel_data, 4 * width as usize).expect("texture update failed");
+            texture.set_blend_mode(sdl2::render::BlendMode::Add);
+            
+            let dst_rect = sdl2::rect::Rect::new(x, y, width, height);
+            canvas.copy(&texture, None, dst_rect).expect("text rendering failed");
+        };
+        draw_text(&resources[0].1.to_string(), 1280 - 100, 720 - 100);
+        draw_text(&resources[1].1.to_string(), 1280 - 100, 720 - 50);
     }
 }

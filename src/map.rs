@@ -22,7 +22,7 @@ pub fn new_map() -> Vec<TileType> {
     map
 }
 
-pub fn render_map(map : &Vec<TileType>, canvas : &mut WindowCanvas, textures : &[Texture]) {
+pub fn render_map(map : &Vec<TileType>, canvas : &mut WindowCanvas, textures : &Vec<Texture>) {
     // draw the map
     let mut y = 0;
     let mut x = 0;

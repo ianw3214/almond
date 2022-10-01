@@ -15,7 +15,7 @@ struct RenderTarget {
     texture_index: usize
 }
 
-pub fn render(canvas: &mut WindowCanvas, textures: &[Texture], world: &World) {
+pub fn render(canvas: &mut WindowCanvas, textures: &Vec<Texture>, world: &World) {
     let positions = world.read_storage::<Position>();
     let renderables = world.read_storage::<Renderable>();
     let mut animatables = world.write_storage::<Animatable>();

@@ -8,13 +8,11 @@ mod scheduler;
 mod hud;
 mod debug;
 
-use sdl2::pixels::PixelFormatEnum;
 use specs::prelude::*;
 
 use sdl2::pixels::Color;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
-use sdl2::image::LoadTexture;
 
 use crate::components::*;
 use crate::map::*;
@@ -39,25 +37,21 @@ struct State {
 fn main() {
 
     let mut engine = engine::engine::init_engine();
+    let mut textures = engine::resource::TextureManager::new(&engine.texture_creator);
+    textures.load("assets/villager.png");
+    textures.load("assets/grass.png");
+    textures.load("assets/tree.png");
+    textures.load("assets/flint.png");
+    textures.load("assets/water.png");
+    textures.load("assets/storage.png");
+    textures.load("assets/house.png");
 
-    // Initialize texture resources
-    let textures = [
-        engine.texture_creator.load_texture("assets/villager.png").unwrap(),
-        engine.texture_creator.load_texture("assets/grass.png").unwrap(),
-        engine.texture_creator.load_texture("assets/tree.png").unwrap(),
-        engine.texture_creator.load_texture("assets/flint.png").unwrap(),
-        engine.texture_creator.load_texture("assets/water.png").unwrap(),
-        engine.texture_creator.load_texture("assets/storage.png").unwrap(),
-        engine.texture_creator.load_texture("assets/house.png").unwrap()
-    ];
-
-    let mut ui_textures = [
-        engine.texture_creator.load_texture("assets/ui/background.png").unwrap(),
-        engine.texture_creator.load_texture("assets/ui/build.png").unwrap(),
-        engine.texture_creator.load_texture("assets/ui/collect.png").unwrap(),
-        engine.texture_creator.load_texture("assets/ui/progress_bar.png").unwrap(),
-        engine.texture_creator.load_texture("assets/ui/progress_bar_bg.png").unwrap()
-    ];
+    let mut ui_textures = engine::resource::TextureManager::new(&engine.texture_creator);
+    ui_textures.load("assets/ui/background.png");
+    ui_textures.load("assets/ui/build.png");
+    ui_textures.load("assets/ui/collect.png");
+    ui_textures.load("assets/ui/progress_bar.png");
+    ui_textures.load("assets/ui/progress_bar_bg.png");
 
     let mut gs = State {
         ecs: World::new()
@@ -124,17 +118,6 @@ fn main() {
 
     let mut ui_hud = hud::Hud::new();
     ui_hud.init();
-
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // test text rendering
-    let scale : f32 = 32.0;
-    let message = "Hello World!";
-
-    let (width, height, pixel_data) = engine.text.layout_data(message, scale);
-    let mut texture = engine.texture_creator.create_texture(PixelFormatEnum::RGBA32, sdl2::render::TextureAccess::Static, width, height).expect("Texture creation failed...");
-    texture.update(None, &pixel_data, 4 * width as usize).expect("texture update failed");
-    texture.set_blend_mode(sdl2::render::BlendMode::Add);
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     'running: loop {
         // delta time
@@ -225,18 +208,12 @@ fn main() {
         // render
         engine.canvas.clear(); 
 
-        render_map(&gs.ecs.fetch::<Vec<TileType>>(), &mut engine.canvas, &textures);
+        render_map(&gs.ecs.fetch::<Vec<TileType>>(), &mut engine.canvas, &textures.textures);
         
         debug::renderer::render(&mut engine.canvas, &gs.ecs);
 
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        // test text rendering
-        let dst_rect = sdl2::rect::Rect::new(400, 400, width, height);
-        engine.canvas.copy(&texture, None, dst_rect).expect("text rendering failed");
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-        renderer::render(&mut engine.canvas, &textures, &gs.ecs);
-        ui_hud.render(&mut engine.canvas, &mut ui_textures, &gs.ecs);
+        renderer::render(&mut engine.canvas, &textures.textures, &gs.ecs);
+        ui_hud.render(&mut engine.canvas, &mut ui_textures, &engine.text, &gs.ecs);
         engine.canvas.present();
     }
 }
