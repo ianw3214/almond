@@ -7,6 +7,7 @@ use sdl2::render::{WindowCanvas};
 use crate::components::*;
 use crate::engine::resource::TextureManager;
 use crate::engine::text::TextEngine;
+use crate::TownInfo;
 
 #[derive(Clone, Copy)]
 pub enum UIEvent {
@@ -103,8 +104,8 @@ impl Hud {
             match element {
                 UIElement::Background(data) => {
                     // minimum size for backgrounds for proper rendering
-                    assert!(data.w >= 20, "Background width is less than required minimum of 20");
-                    assert!(data.h >= 20, "Background height is less than required minimum of 20");
+                    debug_assert!(data.w >= 20, "Background width is less than required minimum of 20");
+                    debug_assert!(data.h >= 20, "Background height is less than required minimum of 20");
                     let mut render_part = | src : Rect, dst : Rect | {
                         canvas.copy(&textures.textures[0], src, dst).expect("render copy failed...");
                     };
@@ -173,7 +174,11 @@ impl Hud {
             let dst_rect = sdl2::rect::Rect::new(x, y, width, height);
             canvas.copy(&texture, None, dst_rect).expect("text rendering failed");
         };
-        draw_text(&resources[0].1.to_string(), 1280 - 100, 720 - 100);
-        draw_text(&resources[1].1.to_string(), 1280 - 100, 720 - 50);
+        draw_text(&resources[0].1.to_string(), 1280 - 100, 720 - 110);
+        draw_text(&resources[1].1.to_string(), 1280 - 100, 720 - 80);
+
+        // draw the town name
+        let town_info = world.fetch::<TownInfo>();
+        draw_text(&town_info.name, 1280 - 150, 720 - 40);
     }
 }

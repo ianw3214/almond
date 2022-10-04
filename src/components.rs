@@ -13,6 +13,7 @@ pub enum Task {
     COLLECT(Entity),
     STORE(Entity),
     BUILD(Entity),
+    HOME(Entity),
     IDLE
 }
 
@@ -78,4 +79,20 @@ pub struct BoundingBox {
     pub height : u32,
     pub x_offset : i32,
     pub y_offset : i32
+}
+
+#[derive(Component, Default)]
+#[storage(NullStorage)]
+pub struct TownCenter;
+
+#[derive(Component)]
+pub struct Tenant {
+    pub house : Option<Entity>
+}
+
+#[derive(Component)]
+pub struct Housing {
+    pub capacity : i32,
+    pub num_tenants : i32
+    // might want to store list of tenants as well?
 }

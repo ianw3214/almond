@@ -69,6 +69,17 @@ impl<'a> System<'a> for AI {
                         constructs.push((entity, target));
                     }
                 }
+                Task::HOME(target) => {
+                    // try to move back home
+                    let target_pos = data.4.get(target).unwrap();
+                    let dist = (pos.x - target_pos.x).abs() + (pos.y - target_pos.y).abs();
+                    if dist > DISTANCE_THRESHOLD {
+                        movement.target = Some((target_pos.x, target_pos.y));
+                    }
+                    else {
+                        brain.task = Task::IDLE;
+                    }
+                },
                 Task::IDLE => {
                     // give the brain a 1 in 1000 chance to randomly move
                     brain.task = Task::IDLE;

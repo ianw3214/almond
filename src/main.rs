@@ -7,6 +7,7 @@ mod pathfinder;
 mod scheduler;
 mod hud;
 mod debug;
+mod gameplay;
 
 use specs::prelude::*;
 
@@ -34,6 +35,10 @@ struct State {
     ecs: World
 }
 
+pub struct TownInfo {
+    pub name : String
+}
+
 fn main() {
 
     let mut engine = engine::engine::init_engine();
@@ -45,6 +50,7 @@ fn main() {
     textures.load("assets/water.png");
     textures.load("assets/storage.png");
     textures.load("assets/house.png");
+    textures.load("assets/banner.png");
 
     let mut ui_textures = engine::resource::TextureManager::new(&engine.texture_creator);
     ui_textures.load("assets/ui/background.png");
@@ -64,11 +70,13 @@ fn main() {
     gs.ecs.register::<Inventory>();
     gs.ecs.register::<Movement>();
     gs.ecs.register::<BoundingBox>();
+    gs.ecs.register::<TownCenter>();
 
     let mut dispatcher = DispatcherBuilder::new()
         .with(scheduler::Scheduler, "Scheduler", &[])
         .with(brain::AI, "AI", &["Scheduler"])
         .with(pathfinder::Pathfinder, "Pathfinder", &["AI"])
+        .with(gameplay::housing::HousingSystem, "Housing", &["AI"])
         .build();
     dispatcher.setup(&mut gs.ecs);
 
@@ -80,6 +88,7 @@ fn main() {
         .with(Inventory{ resources: vec![ (ResourceType::WOOD, 0), (ResourceType::FLINT, 0)]})
         .with(Movement{ speed : 1, target: None })
         .with(BoundingBox{ width : 30, height : 40, x_offset : 0, y_offset : 0 })
+        .with(Tenant{ house : None })
         .build();
     
     let _wood = gs.ecs.create_entity()
@@ -103,9 +112,17 @@ fn main() {
         .with(BoundingBox{ width : 40, height : 40, x_offset : 0, y_offset : 0 })
         .build();
 
+    let _banner = gs.ecs.create_entity()
+        .with(Position {x: 400, y: 400})
+        .with(Renderable{ i : 7})
+        .with(TownCenter)
+        .with(BoundingBox{ width : 40, height : 40, x_offset : 0, y_offset : 0 })
+        .build();
+
     // global resources
     gs.ecs.insert(DeltaTime(33.3));
     gs.ecs.insert(new_map());
+    gs.ecs.insert(TownInfo{ name : String::from("Test Town") });
     let taskqueue : Vec<Task> = Vec::new();
     gs.ecs.insert(taskqueue);
     let eventqueue : Vec<hud::UIEvent> = Vec::new();
@@ -149,6 +166,8 @@ fn main() {
                                     .with(Position{ x : x, y : y })
                                     .with(Renderable{ i : 6 })
                                     .with(Construction{ timer : 10.0 })
+                                    .with(BoundingBox{ width : 40, height : 40, x_offset : 0, y_offset : 0 })
+                                    .with(Housing{ capacity : 2, num_tenants : 0 })
                                     .build();
                                 // Add a task to construct the building
                                 let mut taskqueue = gs.ecs.write_resource::<Vec<Task>>();

@@ -44,6 +44,9 @@ impl<'a> System<'a> for Scheduler {
                         taskqueue.pop();
                         break;
                     }
+                    Task::HOME(_target) => {
+                        debug_assert!(false, "Home task should not be handled by scheduler right now...");
+                    }
                     Task::IDLE => {
                         // do nothing...
                     }

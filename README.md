@@ -18,6 +18,7 @@ To make SDL2 work on windows, [follow the instructions here](https://github.com/
 - [x] Resource manager (engine)
   - [x] texture loading
   - [ ] font engine
+  - [ ] get texture by path
 - [x] Delta time management
 - [ ] testing????
 - [ ] collisions
@@ -27,5 +28,5 @@ To make SDL2 work on windows, [follow the instructions here](https://github.com/
   - [ ] game state serialization
   - [ ] component serialization
 - [x] rendering order
-- [ ] text rendering
+- [x] text rendering
 - [ ] audio??
