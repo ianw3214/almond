@@ -39,6 +39,10 @@ pub struct TownInfo {
     pub name : String
 }
 
+pub enum GameRequests {
+    ConstructionStart(i32, i32)
+}
+
 fn main() {
 
     let mut engine = engine::engine::init_engine();
@@ -77,6 +81,7 @@ fn main() {
         .with(brain::AI, "AI", &["Scheduler"])
         .with(pathfinder::Pathfinder, "Pathfinder", &["AI"])
         .with(gameplay::housing::HousingSystem, "Housing", &["AI"])
+        .with(gameplay::construction::ConstructionSystem, "Construction", &["AI"])
         .build();
     dispatcher.setup(&mut gs.ecs);
 
@@ -108,7 +113,7 @@ fn main() {
     let _store = gs.ecs.create_entity()
         .with(Position {x: 300, y: 300})
         .with(Renderable{ i : 5})
-        .with(ResourceStorage{ resources:vec![ (ResourceType::WOOD, 0), (ResourceType::FLINT, 0)], max: 10})
+        .with(ResourceStorage{ resources:vec![ (ResourceType::WOOD, 10), (ResourceType::FLINT, 10)], max: 10})
         .with(BoundingBox{ width : 40, height : 40, x_offset : 0, y_offset : 0 })
         .build();
 
@@ -127,6 +132,8 @@ fn main() {
     gs.ecs.insert(taskqueue);
     let eventqueue : Vec<hud::UIEvent> = Vec::new();
     gs.ecs.insert(eventqueue);
+    let requestqueue : Vec<GameRequests> = Vec::new();
+    gs.ecs.insert(requestqueue);
     
     // This could eventually be a global resource?
     let mut cursor_state : CursorState = CursorState::DEFAULT;
@@ -162,16 +169,8 @@ fn main() {
                                 // do nothing...
                             },
                             CursorState::BUILD => {
-                                let building = gs.ecs.create_entity()
-                                    .with(Position{ x : x, y : y })
-                                    .with(Renderable{ i : 6 })
-                                    .with(Construction{ timer : 10.0 })
-                                    .with(BoundingBox{ width : 40, height : 40, x_offset : 0, y_offset : 0 })
-                                    .with(Housing{ capacity : 2, num_tenants : 0 })
-                                    .build();
-                                // Add a task to construct the building
-                                let mut taskqueue = gs.ecs.write_resource::<Vec<Task>>();
-                                taskqueue.push(Task::BUILD(building));
+                                let mut requests_queue = gs.ecs.write_resource::<Vec<GameRequests>>();
+                                requests_queue.push(GameRequests::ConstructionStart(x, y));
                                 // reset the cursor state
                                 cursor_state = CursorState::DEFAULT;
                             },

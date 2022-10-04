@@ -30,3 +30,7 @@ To make SDL2 work on windows, [follow the instructions here](https://github.com/
 - [x] rendering order
 - [x] text rendering
 - [ ] audio??
+- [ ] rendering
+  - [ ] consistent sprite placement based on position
+  - [ ] camera system
+  - [ ] sprite scaling (more low res sprites)

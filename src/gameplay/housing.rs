@@ -28,6 +28,9 @@ impl<'a> System<'a> for HousingSystem {
                 }
             }
             // let the brain occasionally return home
+            // TODO: This should probably be handled less randomly
+            //  e.g. a return home at night system
+            //  a time system will have to be implmented to make it work
             if let Some(house) = tenant.house {
                 if let Task::IDLE = brain.task{
                     let mut rng = thread_rng();
