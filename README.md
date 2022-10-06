@@ -7,7 +7,7 @@ To make SDL2 work on windows, [follow the instructions here](https://github.com/
 ## Some sort of TODOs
 
 - [x] Buildings
-  - [ ] separate construction sprites
+  - [x] separate construction sprites
   - [ ] construction highlight
 - [ ] map generation (tiles)
 - [ ] resource system (game)

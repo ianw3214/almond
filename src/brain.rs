@@ -18,6 +18,8 @@ impl<'a> System<'a> for AI {
         WriteStorage<'a, Position>,
         WriteStorage<'a, Movement>,
         WriteStorage<'a, Construction>,
+        WriteStorage<'a, Renderable>,
+        WriteStorage<'a, Housing>,
         // List of all entities
         Entities<'a>,
         // Global resources
@@ -31,7 +33,7 @@ impl<'a> System<'a> for AI {
         let mut constructs : Vec<(Entity, Entity)> = Vec::new();
 
         // Let things with  brains try to collect resources
-        for (entity, brain, pos, movement) in (&data.7, &mut data.0, &data.4, &mut data.5).join() {
+        for (entity, brain, pos, movement) in (&data.9, &mut data.0, &data.4, &mut data.5).join() {
             match brain.task {
                 Task::COLLECT(target) => {
                     // try to move to target and handle it
@@ -137,19 +139,23 @@ impl<'a> System<'a> for AI {
         }
 
         // construction targets
+        // TODO: Handle this in construction system?
         for pairs in constructs {
             let construction = data.6.get_mut(pairs.1).unwrap();
-            construction.timer -= (&data.8).0;
+            construction.timer -= (&data.10).0;
             if construction.timer <= 0.0 {
                 let mut brain = data.0.get_mut(pairs.0).unwrap();
                 brain.task = Task::IDLE;
                 data.6.remove(pairs.1);
+                let mut renderable = data.7.get_mut(pairs.1).expect("Expected renderable");
+                renderable.i = 6;
+                data.8.insert(pairs.1, Housing{ capacity : 2, num_tenants : 0}).expect("insert housing component failed");
             }
         }
 
         // remove depleted resources
         for entity in removes {
-            data.7.delete(entity).expect("");
+            data.9.delete(entity).expect("");
         }
 
     }

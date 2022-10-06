@@ -55,6 +55,7 @@ fn main() {
     textures.load("assets/storage.png");
     textures.load("assets/house.png");
     textures.load("assets/banner.png");
+    textures.load("assets/construction.png");
 
     let mut ui_textures = engine::resource::TextureManager::new(&engine.texture_creator);
     ui_textures.load("assets/ui/background.png");

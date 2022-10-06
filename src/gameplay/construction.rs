@@ -42,10 +42,10 @@ impl<'a> System<'a> for ConstructionSystem {
                 // consume the resources and build the building
                 let building = data.3.create();
                 data.4.insert(building, Position{ x : x, y : y });
-                data.4.insert(building, Renderable{ i : 6 });
+                data.4.insert(building, Renderable{ i : 8 });
                 data.4.insert(building, Construction{ timer : 10.0 });
                 data.4.insert(building, BoundingBox{ width : 40, height : 40, x_offset : 0, y_offset : 0 });
-                data.4.insert(building, Housing{ capacity : 2, num_tenants : 0 });
+                // data.4.insert(building, Housing{ capacity : 2, num_tenants : 0 });
                 // Add a task to construct the building
                 let taskqueue = &mut *data.2;
                 taskqueue.push(Task::BUILD(building));
