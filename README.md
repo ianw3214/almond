@@ -34,3 +34,6 @@ To make SDL2 work on windows, [follow the instructions here](https://github.com/
   - [ ] consistent sprite placement based on position
   - [ ] camera system
   - [ ] sprite scaling (more low res sprites)
+- [ ] keyboard shortcuts
+- [ ] game UI
+  - [ ] selected entity info

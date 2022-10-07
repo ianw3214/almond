@@ -20,6 +20,7 @@ use crate::map::*;
 
 use hud::UIEvent;
 
+use std::collections::VecDeque;
 use std::time::SystemTime;
 
 enum CursorState {
@@ -129,7 +130,7 @@ fn main() {
     gs.ecs.insert(DeltaTime(33.3));
     gs.ecs.insert(new_map());
     gs.ecs.insert(TownInfo{ name : String::from("Test Town") });
-    let taskqueue : Vec<Task> = Vec::new();
+    let taskqueue : VecDeque<Task> = VecDeque::new();
     gs.ecs.insert(taskqueue);
     let eventqueue : Vec<hud::UIEvent> = Vec::new();
     gs.ecs.insert(eventqueue);
@@ -186,8 +187,8 @@ fn main() {
                                     let pos_y = pos.y + aabb.y_offset;
                                     if x > pos_x && x < pos_x + aabb.width as i32 {
                                         if y > pos_y && y < pos_y + aabb.height as i32 {
-                                            let mut taskqueue = gs.ecs.write_resource::<Vec<Task>>();
-                                            taskqueue.push(Task::COLLECT(entity));
+                                            let mut taskqueue = gs.ecs.write_resource::<VecDeque<Task>>();
+                                            taskqueue.push_back(Task::COLLECT(entity));
                                         }
                                     }
                                 }

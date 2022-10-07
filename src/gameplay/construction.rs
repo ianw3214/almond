@@ -1,6 +1,7 @@
 use specs::prelude::*;
 
 use std::cmp;
+use std::collections::VecDeque;
 
 use crate::{components::*, GameRequests};
 
@@ -11,7 +12,7 @@ impl<'a> System<'a> for ConstructionSystem {
         WriteStorage<'a, ResourceStorage>,
         // global resources
         WriteExpect<'a, Vec<GameRequests>>,
-        WriteExpect<'a, Vec<Task>>,
+        WriteExpect<'a, VecDeque<Task>>,
         // List of all entities
         Entities<'a>,
         Read<'a, LazyUpdate>
@@ -48,7 +49,7 @@ impl<'a> System<'a> for ConstructionSystem {
                 // data.4.insert(building, Housing{ capacity : 2, num_tenants : 0 });
                 // Add a task to construct the building
                 let taskqueue = &mut *data.2;
-                taskqueue.push(Task::BUILD(building));
+                taskqueue.push_back(Task::BUILD(building));
             }
         }
     }
