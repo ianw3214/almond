@@ -1,7 +1,7 @@
 use sdl2::rect::{Rect, Point};
 use sdl2::render::{WindowCanvas, Texture};
 
-use rand::prelude::*;
+// use rand::prelude::*;
 
 #[derive(PartialEq, Copy, Clone)]
 pub enum TileType {
@@ -9,7 +9,7 @@ pub enum TileType {
 }
 
 /////////////////////////////////////////////////
-const PERLIN_GRID_SIZE : i32 = 80;
+const PERLIN_GRID_SIZE : i32 = 10;
 const TABLE_SIZE : usize = 256;
 const VALUES : [u8; TABLE_SIZE] = [
     151,160,137,91,90,15,                 
@@ -67,8 +67,8 @@ fn lerp(a : f32, b : f32, val : f32) -> f32 {
 }
 
 fn perlin_noise(x : i32, y : i32) -> f32 {
-    let left = x % PERLIN_GRID_SIZE;
-    let top = y % PERLIN_GRID_SIZE;
+    let left = (x / PERLIN_GRID_SIZE) * PERLIN_GRID_SIZE;
+    let top = (y / PERLIN_GRID_SIZE) * PERLIN_GRID_SIZE;
 
     let grad_top_left = grad(left, top);
     let grad_top_right = grad(left + PERLIN_GRID_SIZE, top);
@@ -89,8 +89,8 @@ fn perlin_noise(x : i32, y : i32) -> f32 {
     let dot_bot_left = dot(grad_bottom_left, dist_bot_left);
     let dot_bot_right = dot(grad_bottom_right, dist_bot_right);
 
-    let smooth_x = smoothstep(x);
-    let smooth_y = smoothstep(y);
+    let smooth_x = smoothstep(x - left);
+    let smooth_y = smoothstep(y - top);
 
     let nx0 = lerp(dot_top_left, dot_top_right, smooth_x);
     let nx1 = lerp(dot_bot_left, dot_bot_right, smooth_x);
@@ -103,23 +103,15 @@ fn xy_idx(x: i32, y: i32) -> usize {
     (y as usize * 80) + x as usize
 }
 
+const MAP_WIDTH : usize = 80;
+const MAP_HEIGHT : usize = 50;
 pub fn new_map() -> Vec<TileType> {
-    let width : usize = 80;
-    let height : usize = 50;
-    let mut map = vec![TileType::Grass; width * height];
-    /*
-    let mut rng = thread_rng();
-    for _ in 0..100 {
-        let index = rng.gen_range(0..80 * 50);
-        map[index] = TileType::Water;
-    }
-    */
-    for x in 0..width {
-        for y in 0..height {
+    let mut map = vec![TileType::Grass; MAP_WIDTH * MAP_HEIGHT];
+    for x in 0..MAP_WIDTH {
+        for y in 0..MAP_HEIGHT {
             let val = perlin_noise(x as i32, y as i32);
-            print!("{} ", val);
             if val < 0.0 {
-                let index = y * width + x;
+                let index = y * MAP_WIDTH + x;
                 map[index] = TileType::Water;
             }
         }
@@ -144,7 +136,7 @@ pub fn render_map(map : &Vec<TileType>, canvas : &mut WindowCanvas, textures : &
             }
         }
         x += 1;
-        if x > 79 {
+        if x >= MAP_WIDTH as i32 {
             x = 0;
             y += 1;
         }
