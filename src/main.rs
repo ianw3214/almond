@@ -40,6 +40,11 @@ pub struct TownInfo {
     pub name : String
 }
 
+pub struct CameraInfo {
+    x : f32,
+    y : f32
+}
+
 pub enum GameRequests {
     ConstructionStart(i32, i32)
 }
@@ -136,6 +141,7 @@ fn main() {
     gs.ecs.insert(eventqueue);
     let requestqueue : Vec<GameRequests> = Vec::new();
     gs.ecs.insert(requestqueue);
+    gs.ecs.insert(CameraInfo{ x : -200.0, y : -200.0 });
     
     // This could eventually be a global resource?
     let mut cursor_state : CursorState = CursorState::DEFAULT;
@@ -165,6 +171,9 @@ fn main() {
                 Event::MouseButtonDown { x, y, ..} => {
                     let handled = ui_hud.handle_mouse_click(x, y, &mut gs.ecs);
                     if !handled {
+                        let camera_info = gs.ecs.read_resource::<CameraInfo>();
+                        let world_x = x + camera_info.x as i32;
+                        let world_y = y + camera_info.y as i32;
                         // TODO: Move this into a system?
                         match cursor_state {
                             CursorState::DEFAULT => {
@@ -172,7 +181,7 @@ fn main() {
                             },
                             CursorState::BUILD => {
                                 let mut requests_queue = gs.ecs.write_resource::<Vec<GameRequests>>();
-                                requests_queue.push(GameRequests::ConstructionStart(x, y));
+                                requests_queue.push(GameRequests::ConstructionStart(world_x, world_y));
                                 // reset the cursor state
                                 cursor_state = CursorState::DEFAULT;
                             },
@@ -185,8 +194,8 @@ fn main() {
                                 for (entity, pos, aabb, _) in (&entities, &positions, &aabbs, &resources).join() {
                                     let pos_x = pos.x + aabb.x_offset;
                                     let pos_y = pos.y + aabb.y_offset;
-                                    if x > pos_x && x < pos_x + aabb.width as i32 {
-                                        if y > pos_y && y < pos_y + aabb.height as i32 {
+                                    if world_x > pos_x && world_x < pos_x + aabb.width as i32 {
+                                        if world_y > pos_y && world_y < pos_y + aabb.height as i32 {
                                             let mut taskqueue = gs.ecs.write_resource::<VecDeque<Task>>();
                                             taskqueue.push_back(Task::COLLECT(entity));
                                         }
@@ -228,7 +237,7 @@ fn main() {
         // render
         engine.canvas.clear(); 
 
-        render_map(&gs.ecs.fetch::<Vec<TileType>>(), &mut engine.canvas, &textures.textures);
+        render_map(&gs.ecs.fetch::<Vec<TileType>>(), &mut engine.canvas, &textures.textures, &gs.ecs);
         
         debug::renderer::render(&mut engine.canvas, &gs.ecs);
 

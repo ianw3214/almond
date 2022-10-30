@@ -4,7 +4,7 @@ use specs::prelude::*;
 use sdl2::rect::Rect;
 use sdl2::render::{WindowCanvas};
 
-use crate::components::*;
+use crate::{components::*, CameraInfo};
 use crate::engine::resource::TextureManager;
 use crate::engine::text::TextEngine;
 use crate::TownInfo;
@@ -89,12 +89,15 @@ impl Hud {
         // game entity hud data
         let positions = world.read_storage::<Position>();
         let constructions = world.read_storage::<Construction>();
+        let camera_info = world.read_resource::<CameraInfo>();
         for (pos, construction) in (&positions, &constructions).join() {
             if construction.timer > 0.0 {
+                let screen_x = pos.x - camera_info.x as i32;
+                let screen_y = pos.y - camera_info.y as i32;
                 let filled = 1.0 - construction.timer / 10.0;
-                let bg_rect = Rect::new(pos.x, pos.y, 40, 10);
+                let bg_rect = Rect::new(screen_x, screen_y, 40, 10);
                 canvas.copy(&textures.textures[4], None, bg_rect).expect("");
-                let filled_rect = Rect::new(pos.x, pos.y, (40.0 * filled) as u32, 10);
+                let filled_rect = Rect::new(screen_x, screen_y, (40.0 * filled) as u32, 10);
                 // filled portion
                 canvas.copy(&textures.textures[3], None, filled_rect).expect("");
             }

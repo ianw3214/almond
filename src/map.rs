@@ -1,5 +1,8 @@
 use sdl2::rect::{Rect, Point};
 use sdl2::render::{WindowCanvas, Texture};
+use specs::{World, WorldExt};
+
+use crate::CameraInfo;
 
 // use rand::prelude::*;
 
@@ -119,19 +122,23 @@ pub fn new_map() -> Vec<TileType> {
     map
 }
 
-pub fn render_map(map : &Vec<TileType>, canvas : &mut WindowCanvas, textures : &Vec<Texture>) {
+pub fn render_map(map : &Vec<TileType>, canvas : &mut WindowCanvas, textures : &Vec<Texture>, world: &World) {
+    let cameraInfo = world.read_resource::<CameraInfo>();
+    
     // draw the map
     let mut y = 0;
     let mut x = 0;
     for tile in map.iter() {
+        let screen_x = x * 16 - cameraInfo.x as i32;
+        let screen_y = y * 16 - cameraInfo.y as i32;
         // Render a tile depending on the type
         match tile {
             TileType::Grass => {
-                let screen_rect = Rect::from_center(Point::new(x * 16, y * 16), 16, 16);
+                let screen_rect = Rect::from_center(Point::new(screen_x, screen_y), 16, 16);
                 canvas.copy(&textures[1], None, screen_rect).expect("render copy failed...");
             },
             TileType::Water => {
-                let screen_rect = Rect::from_center(Point::new(x * 16, y * 16), 16, 16);
+                let screen_rect = Rect::from_center(Point::new(screen_x, screen_y), 16, 16);
                 canvas.copy(&textures[4], None, screen_rect).expect("render copy failed...");
             }
         }

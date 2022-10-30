@@ -3,15 +3,16 @@ use specs::prelude::*;
 use sdl2::rect::Point;
 use sdl2::render::WindowCanvas;
 
-use crate::components::*;
+use crate::{components::*, CameraInfo};
 
 pub fn render(canvas: &mut WindowCanvas, world: &World) {
     let positions = world.read_storage::<Position>();
     let aabbs = world.write_storage::<BoundingBox>();
+    let camera_info = world.read_resource::<CameraInfo>();
 
     for (pos, aabb) in (&positions, &aabbs).join() {
-        let x = pos.x + aabb.x_offset;
-        let y = pos.y + aabb.y_offset;
+        let x = pos.x + aabb.x_offset - camera_info.x as i32;
+        let y = pos.y + aabb.y_offset - camera_info.y as i32;
         let w = aabb.width;
         let h = aabb.height;
         let top_left = Point::new(x, y);
