@@ -10,6 +10,7 @@ To make SDL2 work on windows, [follow the instructions here](https://github.com/
   - [x] separate construction sprites
   - [ ] construction highlight
 - [x] map generation (tiles)
+  - [ ] Infinite map generation? (Or at least larger map generation)
 - [ ] resource system (game)
 - [ ] UI system
   - [ ] load UI from json file (maybe? investigate)
@@ -24,7 +25,7 @@ To make SDL2 work on windows, [follow the instructions here](https://github.com/
 - [ ] collisions
   - [ ] seperate collision box vs 'selection' box
 - [x] camera system
-  - [ ] camera controls
+  - [x] camera controls
   - [ ] switch all positioning to float based?
   - [ ] camera scaling
 - [ ] serialization

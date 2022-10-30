@@ -123,14 +123,14 @@ pub fn new_map() -> Vec<TileType> {
 }
 
 pub fn render_map(map : &Vec<TileType>, canvas : &mut WindowCanvas, textures : &Vec<Texture>, world: &World) {
-    let cameraInfo = world.read_resource::<CameraInfo>();
+    let camera_info = world.read_resource::<CameraInfo>();
     
     // draw the map
     let mut y = 0;
     let mut x = 0;
     for tile in map.iter() {
-        let screen_x = x * 16 - cameraInfo.x as i32;
-        let screen_y = y * 16 - cameraInfo.y as i32;
+        let screen_x = x * 16 - camera_info.x as i32;
+        let screen_y = y * 16 - camera_info.y as i32;
         // Render a tile depending on the type
         match tile {
             TileType::Grass => {

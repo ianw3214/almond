@@ -40,6 +40,13 @@ pub struct TownInfo {
     pub name : String
 }
 
+const CAMERA_SPEED : f32 = 300.0;
+pub struct CameraControls {
+    up : bool,
+    left : bool,
+    down : bool,
+    right : bool
+}
 pub struct CameraInfo {
     x : f32,
     y : f32
@@ -141,10 +148,11 @@ fn main() {
     gs.ecs.insert(eventqueue);
     let requestqueue : Vec<GameRequests> = Vec::new();
     gs.ecs.insert(requestqueue);
-    gs.ecs.insert(CameraInfo{ x : -200.0, y : -200.0 });
+    gs.ecs.insert(CameraInfo { x: -200.0, y: -200.0 });
     
     // This could eventually be a global resource?
     let mut cursor_state : CursorState = CursorState::DEFAULT;
+    let mut camera_controls : CameraControls = CameraControls{ up : false, left : false, down : false, right : false };
 
     engine.canvas.set_draw_color(Color::RGB(64, 64, 255));
 
@@ -154,8 +162,8 @@ fn main() {
     'running: loop {
         // delta time
         let curr = SystemTime::now();
-        let delta = curr.duration_since(engine.last_update).expect("Time went backwards...");
-        gs.ecs.insert(DeltaTime(delta.as_secs_f32()));
+        let delta = curr.duration_since(engine.last_update).expect("Time went backwards...").as_secs_f32();
+        gs.ecs.insert(DeltaTime(delta));
         engine.last_update = curr;
 
         // handle events
@@ -164,6 +172,38 @@ fn main() {
                 Event::Quit { .. } |
                 Event::KeyDown { keycode: Some(Keycode::Escape), ..} => {
                     break 'running
+                },
+                Event::KeyDown { keycode: Some(Keycode::Up), ..} |
+                Event::KeyDown { keycode: Some(Keycode::W), ..} => {
+                    camera_controls.up = true;
+                },
+                Event::KeyDown { keycode: Some(Keycode::Left), ..} |
+                Event::KeyDown { keycode: Some(Keycode::A), ..} => {
+                    camera_controls.left = true;                
+                },
+                Event::KeyDown { keycode: Some(Keycode::Down), ..} |
+                Event::KeyDown { keycode: Some(Keycode::S), ..} => {
+                    camera_controls.down = true;                
+                },
+                Event::KeyDown { keycode: Some(Keycode::Right), ..} |
+                Event::KeyDown { keycode: Some(Keycode::D), ..} => {  
+                    camera_controls.right = true;                
+                },
+                Event::KeyUp { keycode: Some(Keycode::Up), ..} |
+                Event::KeyUp { keycode: Some(Keycode::W), ..} => {
+                    camera_controls.up = false;
+                },
+                Event::KeyUp { keycode: Some(Keycode::Left), ..} |
+                Event::KeyUp { keycode: Some(Keycode::A), ..} => {
+                    camera_controls.left = false;
+                },
+                Event::KeyUp { keycode: Some(Keycode::Down), ..} |
+                Event::KeyUp { keycode: Some(Keycode::S), ..} => {
+                    camera_controls.down = false;
+                },
+                Event::KeyUp { keycode: Some(Keycode::Right), ..} |
+                Event::KeyUp { keycode: Some(Keycode::D), ..} => {  
+                    camera_controls.right = false;
                 },
                 Event::MouseMotion { x, y, ..} => {
                     ui_hud.handle_mouse_motion(x, y);
@@ -209,6 +249,24 @@ fn main() {
                     }
                 }
                 _ => {}
+            }
+        }
+
+        // Camera handling
+        // TODO: Move this to a different file/system?
+        {
+            let mut camera = gs.ecs.write_resource::<CameraInfo>(); 
+            if camera_controls.up {
+                camera.y -= CAMERA_SPEED * delta;
+            }
+            if camera_controls.left {
+                camera.x -= CAMERA_SPEED * delta;
+            }
+            if camera_controls.down {
+                camera.y += CAMERA_SPEED * delta;
+            }
+            if camera_controls.right {
+                camera.x += CAMERA_SPEED * delta;
             }
         }
 
