@@ -5,7 +5,7 @@ use crate::DeltaTime;
 
 use rand::prelude::*;
 
-const DISTANCE_THRESHOLD : i32 = 10;
+const DISTANCE_THRESHOLD : f32 = 10.0;
 
 pub struct AI;
 
@@ -41,7 +41,7 @@ impl<'a> System<'a> for AI {
                     let dist = (pos.x - target_pos.x).abs() + (pos.y - target_pos.y).abs();
                     if dist > DISTANCE_THRESHOLD {
                         // move to the resource
-                        movement.target = Some((target_pos.x, target_pos.y));
+                        movement.target = Some((target_pos.x as i32, target_pos.y as i32));
                     }
                     else {
                         collects.push((entity, target));
@@ -53,7 +53,7 @@ impl<'a> System<'a> for AI {
                     let dist = (pos.x - target_pos.x).abs() + (pos.y - target_pos.y).abs();
                     if dist > DISTANCE_THRESHOLD {
                         // move to the resource
-                        movement.target = Some((target_pos.x, target_pos.y));
+                        movement.target = Some((target_pos.x as i32, target_pos.y as i32));
                     }
                     else {
                         stores.push((entity, target));
@@ -65,7 +65,7 @@ impl<'a> System<'a> for AI {
                     let dist = (pos.x - target_pos.x).abs() + (pos.y - target_pos.y).abs();
                     if dist > DISTANCE_THRESHOLD {
                         // move to the resource
-                        movement.target = Some((target_pos.x, target_pos.y));
+                        movement.target = Some((target_pos.x as i32, target_pos.y as i32));
                     }
                     else {
                         constructs.push((entity, target));
@@ -76,7 +76,7 @@ impl<'a> System<'a> for AI {
                     let target_pos = data.4.get(target).unwrap();
                     let dist = (pos.x - target_pos.x).abs() + (pos.y - target_pos.y).abs();
                     if dist > DISTANCE_THRESHOLD {
-                        movement.target = Some((target_pos.x, target_pos.y));
+                        movement.target = Some((target_pos.x as i32, target_pos.y as i32));
                     }
                     else {
                         brain.task = Task::IDLE;
@@ -90,7 +90,7 @@ impl<'a> System<'a> for AI {
                     if index == 0 {
                         let x_offset = rng.gen_range(0..30) - 15;
                         let y_offset = rng.gen_range(0..30) - 15;
-                        movement.target = Some((pos.x + x_offset, pos.y + y_offset));
+                        movement.target = Some((pos.x as i32 + x_offset, pos.y as i32 + y_offset));
                     }
                 }
             }

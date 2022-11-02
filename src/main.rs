@@ -100,39 +100,39 @@ fn main() {
     dispatcher.setup(&mut gs.ecs);
 
     let _npc = gs.ecs.create_entity()
-        .with(Position{ x: 40, y: 25})
+        .with(Position{ x: 40.0, y: 25.0})
         .with(Renderable{ i : 0 })
         .with(Animatable{ width: 30, height: 40, frame: 0, timer: 0.0 })
         .with(Brain{ task : Task::IDLE })
         .with(Inventory{ resources: vec![ (ResourceType::WOOD, 0), (ResourceType::FLINT, 0)]})
-        .with(Movement{ speed : 1, target: None })
+        .with(Movement{ speed : 1.0, target: None })
         .with(BoundingBox{ width : 30, height : 40, x_offset : 0, y_offset : 0 })
         .with(Tenant{ house : None })
         .build();
     
     let _wood = gs.ecs.create_entity()
-        .with(Position{ x: 100, y: 100})
+        .with(Position{ x: 100.0, y: 100.0})
         .with(Renderable{ i : 2})
         .with(ResourceSource{ amount: 10, resource_type: ResourceType::WOOD})
         .with(BoundingBox{ width : 40, height : 40, x_offset : 0, y_offset : 0 })
         .build();
 
     let _flint = gs.ecs.create_entity()
-        .with(Position {x: 200, y: 200})
+        .with(Position {x: 200.0, y: 200.0})
         .with(Renderable{ i : 3})
         .with(ResourceSource{ amount: 10, resource_type: ResourceType::FLINT})
         .with(BoundingBox{ width : 40, height : 40, x_offset : 0, y_offset : 0 })
         .build();
 
     let _store = gs.ecs.create_entity()
-        .with(Position {x: 300, y: 300})
+        .with(Position {x: 300.0, y: 300.0})
         .with(Renderable{ i : 5})
         .with(ResourceStorage{ resources:vec![ (ResourceType::WOOD, 10), (ResourceType::FLINT, 10)], max: 10})
         .with(BoundingBox{ width : 40, height : 40, x_offset : 0, y_offset : 0 })
         .build();
 
     let _banner = gs.ecs.create_entity()
-        .with(Position {x: 400, y: 400})
+        .with(Position {x: 400.0, y: 400.0})
         .with(Renderable{ i : 7})
         .with(TownCenter)
         .with(BoundingBox{ width : 40, height : 40, x_offset : 0, y_offset : 0 })
@@ -232,8 +232,8 @@ fn main() {
                                 let aabbs = gs.ecs.read_storage::<BoundingBox>();
                                 // TODO: collision box data?
                                 for (entity, pos, aabb, _) in (&entities, &positions, &aabbs, &resources).join() {
-                                    let pos_x = pos.x + aabb.x_offset;
-                                    let pos_y = pos.y + aabb.y_offset;
+                                    let pos_x = pos.x as i32 + aabb.x_offset;
+                                    let pos_y = pos.y as i32 + aabb.y_offset;
                                     if world_x > pos_x && world_x < pos_x + aabb.width as i32 {
                                         if world_y > pos_y && world_y < pos_y + aabb.height as i32 {
                                             let mut taskqueue = gs.ecs.write_resource::<VecDeque<Task>>();

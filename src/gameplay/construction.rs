@@ -42,7 +42,7 @@ impl<'a> System<'a> for ConstructionSystem {
                 }
                 // consume the resources and build the building
                 let building = data.3.create();
-                data.4.insert(building, Position{ x : x, y : y });
+                data.4.insert(building, Position{ x : x as f32, y : y as f32 });
                 data.4.insert(building, Renderable{ i : 8 });
                 data.4.insert(building, Construction{ timer : 10.0 });
                 data.4.insert(building, BoundingBox{ width : 40, height : 40, x_offset : 0, y_offset : 0 });

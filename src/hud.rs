@@ -92,8 +92,8 @@ impl Hud {
         let camera_info = world.read_resource::<CameraInfo>();
         for (pos, construction) in (&positions, &constructions).join() {
             if construction.timer > 0.0 {
-                let screen_x = pos.x - camera_info.x as i32;
-                let screen_y = pos.y - camera_info.y as i32;
+                let screen_x = pos.x as i32 - camera_info.x as i32;
+                let screen_y = pos.y as i32 - camera_info.y as i32;
                 let filled = 1.0 - construction.timer / 10.0;
                 let bg_rect = Rect::new(screen_x, screen_y, 40, 10);
                 canvas.copy(&textures.textures[4], None, bg_rect).expect("");

@@ -11,8 +11,8 @@ pub fn render(canvas: &mut WindowCanvas, world: &World) {
     let camera_info = world.read_resource::<CameraInfo>();
 
     for (pos, aabb) in (&positions, &aabbs).join() {
-        let x = pos.x + aabb.x_offset - camera_info.x as i32;
-        let y = pos.y + aabb.y_offset - camera_info.y as i32;
+        let x = pos.x as i32 + aabb.x_offset - camera_info.x as i32;
+        let y = pos.y as i32 + aabb.y_offset - camera_info.y as i32;
         let w = aabb.width;
         let h = aabb.height;
         let top_left = Point::new(x, y);

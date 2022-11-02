@@ -40,8 +40,8 @@ pub fn render(canvas: &mut WindowCanvas, textures: &Vec<Texture>, world: &World)
                 animatable.timer = 0.0;
             }
         }
-        let screen_x = pos.x - camera_info.x as i32;
-        let screen_y = pos.y - camera_info.y as i32;
+        let screen_x = pos.x as i32 - camera_info.x as i32;
+        let screen_y = pos.y as i32 - camera_info.y as i32;
         let screen_rect = Rect::new(screen_x, screen_y, 64, 64);
         render_targets.push(RenderTarget{ y : screen_rect.y, src : src_rect, dst : screen_rect, texture_index : render.i });
     }

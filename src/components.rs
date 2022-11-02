@@ -19,8 +19,8 @@ pub enum Task {
 
 #[derive(Component)]
 pub struct Position {
-    pub x : i32,
-    pub y : i32
+    pub x : f32,
+    pub y : f32
 }
 
 #[derive(Component)]
@@ -62,7 +62,7 @@ pub struct Inventory {
 
 #[derive(Component)]
 pub struct Movement {
-    pub speed : i32,
+    pub speed : f32,
     // game data
     pub target : Option<(i32, i32)>
 }

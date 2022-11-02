@@ -13,8 +13,8 @@ impl<'a> System<'a> for Pathfinder {
     fn run(&mut self, mut data : Self::SystemData) {
         for (movement, pos) in (&mut data.0, &mut data.1).join() {
             if let Some(target) = movement.target {
-                let x = target.0;
-                let y = target.1;
+                let x = target.0 as f32;
+                let y = target.1 as f32;
                 if pos.x < x {
                     pos.x = pos.x + movement.speed;
                     if pos.x > x {
