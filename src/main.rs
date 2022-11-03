@@ -8,6 +8,7 @@ mod scheduler;
 mod hud;
 mod debug;
 mod gameplay;
+mod camera;
 
 use specs::prelude::*;
 
@@ -46,10 +47,6 @@ pub struct CameraControls {
     left : bool,
     down : bool,
     right : bool
-}
-pub struct CameraInfo {
-    x : f32,
-    y : f32
 }
 
 pub enum GameRequests {
@@ -148,7 +145,7 @@ fn main() {
     gs.ecs.insert(eventqueue);
     let requestqueue : Vec<GameRequests> = Vec::new();
     gs.ecs.insert(requestqueue);
-    gs.ecs.insert(CameraInfo { x: -200.0, y: -200.0 });
+    gs.ecs.insert(camera::Camera { x: -200.0, y: -200.0, zoom : 2.0 });
     
     // This could eventually be a global resource?
     let mut cursor_state : CursorState = CursorState::DEFAULT;
@@ -211,9 +208,9 @@ fn main() {
                 Event::MouseButtonDown { x, y, ..} => {
                     let handled = ui_hud.handle_mouse_click(x, y, &mut gs.ecs);
                     if !handled {
-                        let camera_info = gs.ecs.read_resource::<CameraInfo>();
-                        let world_x = x + camera_info.x as i32;
-                        let world_y = y + camera_info.y as i32;
+                        let camera_info = gs.ecs.read_resource::<camera::Camera>();
+                        let world_x = camera_info.screen_to_world_x_i32(x);
+                        let world_y = camera_info.screen_to_world_y_i32(y);
                         // TODO: Move this into a system?
                         match cursor_state {
                             CursorState::DEFAULT => {
@@ -255,7 +252,7 @@ fn main() {
         // Camera handling
         // TODO: Move this to a different file/system?
         {
-            let mut camera = gs.ecs.write_resource::<CameraInfo>(); 
+            let mut camera = gs.ecs.write_resource::<camera::Camera>(); 
             if camera_controls.up {
                 camera.y -= CAMERA_SPEED * delta;
             }

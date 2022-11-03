@@ -3,8 +3,7 @@ use specs::prelude::*;
 use sdl2::rect::Rect;
 use sdl2::render::{WindowCanvas, Texture};
 
-use crate::components::*;
-use crate::{DeltaTime, CameraInfo};
+use crate::{components::*, DeltaTime, camera};
 
 const TILES_ACROSS: i32 = 4;
 
@@ -19,7 +18,7 @@ pub fn render(canvas: &mut WindowCanvas, textures: &Vec<Texture>, world: &World)
     let positions = world.read_storage::<Position>();
     let renderables = world.read_storage::<Renderable>();
     let mut animatables = world.write_storage::<Animatable>();
-    let camera_info = world.read_resource::<CameraInfo>();
+    let camera_info = world.read_resource::<camera::Camera>();
     let delta = world.read_resource::<DeltaTime>();
 
     // TODO: Priority queue/more efficient way to render
@@ -40,8 +39,8 @@ pub fn render(canvas: &mut WindowCanvas, textures: &Vec<Texture>, world: &World)
                 animatable.timer = 0.0;
             }
         }
-        let screen_x = pos.x as i32 - camera_info.x as i32;
-        let screen_y = pos.y as i32 - camera_info.y as i32;
+        let screen_x = camera_info.world_to_screen_x(pos.x);
+        let screen_y = camera_info.world_to_screen_y(pos.y);
         let screen_rect = Rect::new(screen_x, screen_y, 64, 64);
         render_targets.push(RenderTarget{ y : screen_rect.y, src : src_rect, dst : screen_rect, texture_index : render.i });
     }
