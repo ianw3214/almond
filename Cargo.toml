@@ -3,15 +3,13 @@ name = "rust_game"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
-specs = "*"
-specs-derive = "*"
-rand = "*"
-ab_glyph = "*"
+bevy = "*"
 
-[dependencies.sdl2]
-version = "*"
-default-features = false
-features = ["image"]
+# Enable a small amount of optimization in debug builds
+[profile.dev]
+opt-level = 1
+
+# Enable high optimizations for dependencies
+[profile.dev.package."*"]
+opt-level = 3

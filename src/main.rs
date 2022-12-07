@@ -1,303 +1,40 @@
-mod engine;
-mod components;
-mod renderer;
-mod map;
-mod brain;
-mod pathfinder;
-mod scheduler;
-mod hud;
-mod debug;
-mod gameplay;
-mod camera;
+use bevy::prelude::*;
 
-use specs::prelude::*;
+#[derive(Component)]
+struct Person;
 
-use sdl2::pixels::Color;
-use sdl2::event::Event;
-use sdl2::keyboard::Keycode;
+#[derive(Component)]
+struct Name (String);
 
-use crate::components::*;
-use crate::map::*;
-
-use hud::UIEvent;
-
-use std::collections::VecDeque;
-use std::time::SystemTime;
-
-enum CursorState {
-    DEFAULT,
-    BUILD,
-    COLLECT
+fn add_people(mut commands : Commands) {
+    commands.spawn((Person, Name("Ian".to_string())));
+    commands.spawn((Person, Name("Stella".to_string())));
 }
 
-#[derive(Default)]
-pub struct DeltaTime(f32);
+#[derive(Resource)]
+pub struct GreetTimer(Timer);
 
-struct State {
-    ecs: World
+fn greet_people(time : Res<Time>, mut timer : ResMut<GreetTimer>, query : Query<&Name, With<Person>>) {
+    if timer.0.tick(time.delta()).just_finished() {
+        for name in query.iter() {
+            println!("Hello {}!", name.0);
+        }   
+    }
 }
 
-pub struct TownInfo {
-    pub name : String
-}
+pub struct HelloPlugin;
 
-const CAMERA_SPEED : f32 = 300.0;
-pub struct CameraControls {
-    up : bool,
-    left : bool,
-    down : bool,
-    right : bool
-}
-
-pub enum GameRequests {
-    ConstructionStart(i32, i32)
+impl Plugin for HelloPlugin {
+    fn build(&self, app : &mut App) {
+        app.insert_resource(GreetTimer(Timer::from_seconds(2.0, TimerMode::Repeating)))
+            .add_startup_system(add_people)
+            .add_system(greet_people);
+    }
 }
 
 fn main() {
-
-    let mut engine = engine::engine::init_engine();
-    let mut textures = engine::resource::TextureManager::new(&engine.texture_creator);
-    textures.load("assets/villager.png");
-    textures.load("assets/grass.png");
-    textures.load("assets/tree.png");
-    textures.load("assets/flint.png");
-    textures.load("assets/water.png");
-    textures.load("assets/storage.png");
-    textures.load("assets/house.png");
-    textures.load("assets/banner.png");
-    textures.load("assets/construction.png");
-
-    let mut ui_textures = engine::resource::TextureManager::new(&engine.texture_creator);
-    ui_textures.load("assets/ui/background.png");
-    ui_textures.load("assets/ui/build.png");
-    ui_textures.load("assets/ui/collect.png");
-    ui_textures.load("assets/ui/progress_bar.png");
-    ui_textures.load("assets/ui/progress_bar_bg.png");
-
-    let mut gs = State {
-        ecs: World::new()
-    };
-    gs.ecs.register::<Position>();
-    gs.ecs.register::<Renderable>();
-    gs.ecs.register::<Animatable>();
-    gs.ecs.register::<ResourceSource>();
-    gs.ecs.register::<Brain>();
-    gs.ecs.register::<Inventory>();
-    gs.ecs.register::<Movement>();
-    gs.ecs.register::<BoundingBox>();
-    gs.ecs.register::<TownCenter>();
-
-    let mut dispatcher = DispatcherBuilder::new()
-        .with(scheduler::Scheduler, "Scheduler", &[])
-        .with(brain::AI, "AI", &["Scheduler"])
-        .with(pathfinder::Pathfinder, "Pathfinder", &["AI"])
-        .with(gameplay::housing::HousingSystem, "Housing", &["AI"])
-        .with(gameplay::construction::ConstructionSystem, "Construction", &["AI"])
-        .build();
-    dispatcher.setup(&mut gs.ecs);
-
-    let _npc = gs.ecs.create_entity()
-        .with(Position{ x: 40.0, y: 25.0})
-        .with(Renderable{ i : 0 })
-        .with(Animatable{ width: 30, height: 40, frame: 0, timer: 0.0 })
-        .with(Brain{ task : Task::IDLE })
-        .with(Inventory{ resources: vec![ (ResourceType::WOOD, 0), (ResourceType::FLINT, 0)]})
-        .with(Movement{ speed : 1.0, target: None })
-        .with(BoundingBox{ width : 30, height : 40, x_offset : 0, y_offset : 0 })
-        .with(Tenant{ house : None })
-        .build();
-    
-    let _wood = gs.ecs.create_entity()
-        .with(Position{ x: 100.0, y: 100.0})
-        .with(Renderable{ i : 2})
-        .with(ResourceSource{ amount: 10, resource_type: ResourceType::WOOD})
-        .with(BoundingBox{ width : 40, height : 40, x_offset : 0, y_offset : 0 })
-        .build();
-
-    let _flint = gs.ecs.create_entity()
-        .with(Position {x: 200.0, y: 200.0})
-        .with(Renderable{ i : 3})
-        .with(ResourceSource{ amount: 10, resource_type: ResourceType::FLINT})
-        .with(BoundingBox{ width : 40, height : 40, x_offset : 0, y_offset : 0 })
-        .build();
-
-    let _store = gs.ecs.create_entity()
-        .with(Position {x: 300.0, y: 300.0})
-        .with(Renderable{ i : 5})
-        .with(ResourceStorage{ resources:vec![ (ResourceType::WOOD, 10), (ResourceType::FLINT, 10)], max: 10})
-        .with(BoundingBox{ width : 40, height : 40, x_offset : 0, y_offset : 0 })
-        .build();
-
-    let _banner = gs.ecs.create_entity()
-        .with(Position {x: 400.0, y: 400.0})
-        .with(Renderable{ i : 7})
-        .with(TownCenter)
-        .with(BoundingBox{ width : 40, height : 40, x_offset : 0, y_offset : 0 })
-        .build();
-
-    // global resources
-    gs.ecs.insert(DeltaTime(33.3));
-    gs.ecs.insert(new_map());
-    gs.ecs.insert(TownInfo{ name : String::from("Test Town") });
-    let taskqueue : VecDeque<Task> = VecDeque::new();
-    gs.ecs.insert(taskqueue);
-    let eventqueue : Vec<hud::UIEvent> = Vec::new();
-    gs.ecs.insert(eventqueue);
-    let requestqueue : Vec<GameRequests> = Vec::new();
-    gs.ecs.insert(requestqueue);
-    gs.ecs.insert(camera::Camera { x: -200.0, y: -200.0, zoom : 2.0 });
-    
-    // This could eventually be a global resource?
-    let mut cursor_state : CursorState = CursorState::DEFAULT;
-    let mut camera_controls : CameraControls = CameraControls{ up : false, left : false, down : false, right : false };
-
-    engine.canvas.set_draw_color(Color::RGB(64, 64, 255));
-
-    let mut ui_hud = hud::Hud::new();
-    ui_hud.init();
-
-    'running: loop {
-        // delta time
-        let curr = SystemTime::now();
-        let delta = curr.duration_since(engine.last_update).expect("Time went backwards...").as_secs_f32();
-        gs.ecs.insert(DeltaTime(delta));
-        engine.last_update = curr;
-
-        // handle events
-        for event in engine.event_pump.poll_iter() {
-            match event {
-                Event::Quit { .. } |
-                Event::KeyDown { keycode: Some(Keycode::Escape), ..} => {
-                    break 'running
-                },
-                Event::KeyDown { keycode: Some(Keycode::Up), ..} |
-                Event::KeyDown { keycode: Some(Keycode::W), ..} => {
-                    camera_controls.up = true;
-                },
-                Event::KeyDown { keycode: Some(Keycode::Left), ..} |
-                Event::KeyDown { keycode: Some(Keycode::A), ..} => {
-                    camera_controls.left = true;                
-                },
-                Event::KeyDown { keycode: Some(Keycode::Down), ..} |
-                Event::KeyDown { keycode: Some(Keycode::S), ..} => {
-                    camera_controls.down = true;                
-                },
-                Event::KeyDown { keycode: Some(Keycode::Right), ..} |
-                Event::KeyDown { keycode: Some(Keycode::D), ..} => {  
-                    camera_controls.right = true;                
-                },
-                Event::KeyUp { keycode: Some(Keycode::Up), ..} |
-                Event::KeyUp { keycode: Some(Keycode::W), ..} => {
-                    camera_controls.up = false;
-                },
-                Event::KeyUp { keycode: Some(Keycode::Left), ..} |
-                Event::KeyUp { keycode: Some(Keycode::A), ..} => {
-                    camera_controls.left = false;
-                },
-                Event::KeyUp { keycode: Some(Keycode::Down), ..} |
-                Event::KeyUp { keycode: Some(Keycode::S), ..} => {
-                    camera_controls.down = false;
-                },
-                Event::KeyUp { keycode: Some(Keycode::Right), ..} |
-                Event::KeyUp { keycode: Some(Keycode::D), ..} => {  
-                    camera_controls.right = false;
-                },
-                Event::MouseMotion { x, y, ..} => {
-                    ui_hud.handle_mouse_motion(x, y);
-                },
-                Event::MouseButtonDown { x, y, ..} => {
-                    let handled = ui_hud.handle_mouse_click(x, y, &mut gs.ecs);
-                    if !handled {
-                        let camera_info = gs.ecs.read_resource::<camera::Camera>();
-                        let world_x = camera_info.screen_to_world_x_i32(x);
-                        let world_y = camera_info.screen_to_world_y_i32(y);
-                        // TODO: Move this into a system?
-                        match cursor_state {
-                            CursorState::DEFAULT => {
-                                // do nothing...
-                            },
-                            CursorState::BUILD => {
-                                let mut requests_queue = gs.ecs.write_resource::<Vec<GameRequests>>();
-                                requests_queue.push(GameRequests::ConstructionStart(world_x, world_y));
-                                // reset the cursor state
-                                cursor_state = CursorState::DEFAULT;
-                            },
-                            CursorState::COLLECT => {
-                                let entities = gs.ecs.entities();
-                                let positions = gs.ecs.read_storage::<Position>();
-                                let resources = gs.ecs.read_storage::<ResourceSource>();
-                                let aabbs = gs.ecs.read_storage::<BoundingBox>();
-                                // TODO: collision box data?
-                                for (entity, pos, aabb, _) in (&entities, &positions, &aabbs, &resources).join() {
-                                    let pos_x = pos.x as i32 + aabb.x_offset;
-                                    let pos_y = pos.y as i32 + aabb.y_offset;
-                                    if world_x > pos_x && world_x < pos_x + aabb.width as i32 {
-                                        if world_y > pos_y && world_y < pos_y + aabb.height as i32 {
-                                            let mut taskqueue = gs.ecs.write_resource::<VecDeque<Task>>();
-                                            taskqueue.push_back(Task::COLLECT(entity));
-                                        }
-                                    }
-                                }
-                                // reset the cursor state
-                                cursor_state = CursorState::DEFAULT;
-                                break;
-                            }
-                        }
-                    }
-                }
-                _ => {}
-            }
-        }
-
-        // Camera handling
-        // TODO: Move this to a different file/system?
-        {
-            let mut camera = gs.ecs.write_resource::<camera::Camera>(); 
-            if camera_controls.up {
-                camera.y -= CAMERA_SPEED * delta;
-            }
-            if camera_controls.left {
-                camera.x -= CAMERA_SPEED * delta;
-            }
-            if camera_controls.down {
-                camera.y += CAMERA_SPEED * delta;
-            }
-            if camera_controls.right {
-                camera.x += CAMERA_SPEED * delta;
-            }
-        }
-
-        // handle UI events
-        {
-            let mut eventqueue = gs.ecs.write_resource::<Vec<UIEvent>>();
-            let event = eventqueue.last();
-            if let Some(event) = event {
-                match event {
-                    UIEvent::Build => {
-                        cursor_state = CursorState::BUILD;
-                        eventqueue.pop();
-                    },
-                    UIEvent::Collect => {
-                        cursor_state = CursorState::COLLECT;
-                        eventqueue.pop();
-                    }
-                }
-            }
-        }
-
-        // update world
-        dispatcher.dispatch(&mut gs.ecs);
-        gs.ecs.maintain();
-
-        // render
-        engine.canvas.clear(); 
-
-        render_map(&gs.ecs.fetch::<Vec<TileType>>(), &mut engine.canvas, &textures.textures, &gs.ecs);
-        
-        debug::renderer::render(&mut engine.canvas, &gs.ecs);
-
-        renderer::render(&mut engine.canvas, &textures.textures, &gs.ecs);
-        ui_hud.render(&mut engine.canvas, &mut ui_textures, &engine.text, &gs.ecs);
-        engine.canvas.present();
-    }
+    App::new()
+        .add_plugins(DefaultPlugins)
+        .add_plugin(HelloPlugin)
+        .run();
 }
