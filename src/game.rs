@@ -21,6 +21,45 @@ fn add_player(mut commands : Commands) {
     }).insert(Player);
 }
 
+fn keyboard_events(mut keyboard_events : EventReader<bevy::input::keyboard::KeyboardInput>) {
+    for event in keyboard_events.iter() {
+        println!("{:?}", event);
+    }
+}
+
+fn keyboard_system(keyboard_input : Res<Input<KeyCode>>) {
+    if keyboard_input.pressed(KeyCode::A) {
+        println!("A currently pressed");
+    }
+
+    if keyboard_input.just_pressed(KeyCode::A) {
+        println!("A just pressed");
+    }
+
+    if keyboard_input.just_released(KeyCode::A) {
+        println!("A just released");
+    }
+}
+
+fn gamepad_events(mut gamepad_event : EventReader<GamepadEvent>) {
+    for event in gamepad_event.iter() {
+        match event.event_type {
+            GamepadEventType::Connected(_) => {
+                println!("{:?} connected", event.gamepad)
+            },
+            GamepadEventType::Disconnected => {
+                println!("{:?} disconnected", event.gamepad)
+            },
+            GamepadEventType::ButtonChanged(button_type, value) => {
+                println!("{:?} of {:?} is changed to {}", button_type, event.gamepad, value)
+            },
+            GamepadEventType::AxisChanged(axis_type, value) => {
+                println!("{:?} of {:?} is changed to {}", axis_type, event.gamepad, value)
+            }
+        }
+    }
+}
+
 fn gamepad_system(
     gamepads : Res<Gamepads>,
     button_inputs : Res<Input<GamepadButton>>,
@@ -51,31 +90,14 @@ fn gamepad_system(
     }
 }
 
-fn gamepad_events(mut gamepad_event : EventReader<GamepadEvent>) {
-    for event in gamepad_event.iter() {
-        match event.event_type {
-            GamepadEventType::Connected(_) => {
-                println!("{:?} connected", event.gamepad)
-            },
-            GamepadEventType::Disconnected => {
-                println!("{:?} disconnected", event.gamepad)
-            },
-            GamepadEventType::ButtonChanged(button_type, value) => {
-                println!("{:?} of {:?} is changed to {}", button_type, event.gamepad, value)
-            },
-            GamepadEventType::AxisChanged(axis_type, value) => {
-                println!("{:?} of {:?} is changed to {}", axis_type, event.gamepad, value)
-            }
-        }
-    }
-}
-
 pub struct Game;
 
 impl Plugin for Game {
     fn build(&self, app : &mut App) {
         app.add_startup_system(setup_camera)
             .add_startup_system(add_player)
+            .add_system(keyboard_events)
+            .add_system(keyboard_system)
             .add_system(gamepad_events)
             .add_system(gamepad_system);
     }
