@@ -51,12 +51,32 @@ fn gamepad_system(
     }
 }
 
+fn gamepad_events(mut gamepad_event : EventReader<GamepadEvent>) {
+    for event in gamepad_event.iter() {
+        match event.event_type {
+            GamepadEventType::Connected(_) => {
+                println!("{:?} connected", event.gamepad)
+            },
+            GamepadEventType::Disconnected => {
+                println!("{:?} disconnected", event.gamepad)
+            },
+            GamepadEventType::ButtonChanged(button_type, value) => {
+                println!("{:?} of {:?} is changed to {}", button_type, event.gamepad, value)
+            },
+            GamepadEventType::AxisChanged(axis_type, value) => {
+                println!("{:?} of {:?} is changed to {}", axis_type, event.gamepad, value)
+            }
+        }
+    }
+}
+
 pub struct Game;
 
 impl Plugin for Game {
     fn build(&self, app : &mut App) {
         app.add_startup_system(setup_camera)
             .add_startup_system(add_player)
+            .add_system(gamepad_events)
             .add_system(gamepad_system);
     }
 }
