@@ -3,7 +3,8 @@ use bevy::prelude::*;
 #[derive(Default)]
 pub struct ControllerInputState {
     pub left_stick_x : f32,
-    pub left_stick_y : f32
+    pub left_stick_y : f32,
+    pub right_trigger : f32
 }
 
 #[derive(Resource, Default)]
@@ -66,12 +67,13 @@ pub fn gamepad_system(
         else if button_inputs.just_released(GamepadButton::new(gamepad, GamepadButtonType::South)) {
             println!("{:?} just released south", gamepad);
         }
-
         let right_trigger = button_axes
             .get(GamepadButton::new(gamepad, GamepadButtonType::RightTrigger2))
             .unwrap();
         if right_trigger.abs() > 0.1 {
-            println!("{:?} right trigger 2 value is {}", gamepad, right_trigger);
+            input_state.controller.right_trigger = right_trigger;
+        } else {
+            input_state.controller.right_trigger = 0.0;
         }
 
         let left_stick_x = axes

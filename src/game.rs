@@ -11,6 +11,9 @@ struct Movement {
     pub v_movement : f32
 }
 
+#[derive(Component)]
+struct Bullet;
+
 fn update_player_movement(mut query : Query<&mut Movement, With<Player>>, input_state : Res<input::InputState>) {
     for mut movement in &mut query {
         movement.h_movement = input_state.controller.left_stick_x;
@@ -18,10 +21,34 @@ fn update_player_movement(mut query : Query<&mut Movement, With<Player>>, input_
     }
 }
 
+fn update_bullet_movement(mut query : Query<&mut Movement, With<Bullet>>) {
+    for mut movement in &mut query {
+        movement.h_movement = 2.0;
+    }    
+}
+
 fn handle_movement(mut query : Query<(&Movement, &mut Transform)>) {
     for (movement, mut transform) in &mut query {
         transform.translation.x = transform.translation.x + movement.h_movement;
         transform.translation.y = transform.translation.y + movement.v_movement;
+    }
+}
+
+fn spawn_bullet(mut commands : Commands, input_state : Res<input::InputState>) {
+    if input_state.controller.right_trigger > 0.0 {
+        commands.spawn(SpriteBundle{
+            sprite : Sprite {
+                color : Color::rgb(0.8, 0.5, 0.5),
+                ..default()
+            },
+            transform : Transform {
+                scale : Vec3::new(3.0, 3.0, 3.0),
+                translation : Vec3::new(0.0, 0.0, 0.0),
+                ..default()
+            },
+            ..default()
+        }).insert(Bullet)
+        .insert(Movement::default());
     }
 }
 
@@ -57,6 +84,8 @@ impl Plugin for Game {
             // .add_system(input::gamepad_events)
             .add_system(input::gamepad_system)
             .add_system(update_player_movement)
+            .add_system(update_bullet_movement)
+            .add_system(spawn_bullet)
             .add_system(handle_movement);
     }
 }
