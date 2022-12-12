@@ -5,10 +5,17 @@ use crate::input;
 #[derive(Component)]
 struct Player;
 
-#[derive(Component)]
+#[derive(Component, Default)]
 struct Movement {
     pub h_movement : f32,
     pub v_movement : f32
+}
+
+fn update_player_movement(mut query : Query<&mut Movement, With<Player>>, input_state : Res<input::InputState>) {
+    for mut movement in &mut query {
+        movement.h_movement = input_state.controller.left_stick_x;
+        movement.v_movement = input_state.controller.left_stick_y;
+    }
 }
 
 fn handle_movement(mut query : Query<(&Movement, &mut Transform)>) {
@@ -35,22 +42,21 @@ fn add_player(mut commands : Commands) {
         },
         ..default()
     }).insert(Player)
-    .insert(Movement {
-        h_movement : 1.0,
-        v_movement : 0.0
-    });
+    .insert(Movement::default());
 }
 
 pub struct Game;
 
 impl Plugin for Game {
     fn build(&self, app : &mut App) {
-        app.add_startup_system(setup_camera)
+        app.init_resource::<input::InputState>()
+            .add_startup_system(setup_camera)
             .add_startup_system(add_player)
             .add_system(input::keyboard_events)
             .add_system(input::keyboard_system)
-            .add_system(input::gamepad_events)
+            // .add_system(input::gamepad_events)
             .add_system(input::gamepad_system)
+            .add_system(update_player_movement)
             .add_system(handle_movement);
     }
 }
