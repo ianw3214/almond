@@ -1,10 +1,17 @@
 use bevy::prelude::*;
 
+const RIGHT_TRIGGER_THRESHOLD : f32 = 0.5;
+
 #[derive(Default)]
 pub struct ControllerInputState {
     pub left_stick_x : f32,
     pub left_stick_y : f32,
-    pub right_trigger : f32
+    pub right_trigger : f32,
+    // events
+    pub right_trigger_pressed : bool,
+    pub right_trigger_released : bool,
+    // other state
+    pub right_trigger_last_frame : f32
 }
 
 #[derive(Resource, Default)]
@@ -60,6 +67,12 @@ pub fn gamepad_system(
     axes : Res<Axis<GamepadAxis>>,
     mut input_state : ResMut<InputState>
 ) {
+    // update previous state
+    input_state.controller.right_trigger_last_frame = input_state.controller.right_trigger;
+    // reset events
+    input_state.controller.right_trigger_pressed = false;
+    input_state.controller.right_trigger_released = false;
+    // update current state based on actual gamepad inputs
     for gamepad in gamepads.iter() {
         if button_inputs.just_pressed(GamepadButton::new(gamepad, GamepadButtonType::South)) {
             println!("{:?} just pressed south", gamepad);
@@ -94,5 +107,12 @@ pub fn gamepad_system(
         else {
             input_state.controller.left_stick_y = 0.0;
         }
+    }
+    // update events based on state updates
+    if input_state.controller.right_trigger >= RIGHT_TRIGGER_THRESHOLD && input_state.controller.right_trigger_last_frame < RIGHT_TRIGGER_THRESHOLD {
+        input_state.controller.right_trigger_pressed = true;
+    }
+    if input_state.controller.right_trigger < RIGHT_TRIGGER_THRESHOLD && input_state.controller.right_trigger_last_frame >= RIGHT_TRIGGER_THRESHOLD {
+        input_state.controller.right_trigger_released = true;
     }
 }

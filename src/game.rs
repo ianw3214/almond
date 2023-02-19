@@ -35,7 +35,7 @@ fn handle_movement(mut query : Query<(&Movement, &mut Transform)>) {
 }
 
 fn spawn_bullet(mut commands : Commands, input_state : Res<input::InputState>) {
-    if input_state.controller.right_trigger > 0.0 {
+    if input_state.controller.right_trigger_released {
         commands.spawn(SpriteBundle{
             sprite : Sprite {
                 color : Color::rgb(0.8, 0.5, 0.5),
