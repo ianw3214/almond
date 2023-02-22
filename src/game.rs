@@ -14,6 +14,9 @@ struct Movement {
 #[derive(Component)]
 struct Bullet;
 
+#[derive(Component)]
+struct Enemy;
+
 fn update_player_movement(mut query : Query<&mut Movement, With<Player>>, input_state : Res<input::InputState>) {
     for mut movement in &mut query {
         movement.h_movement = input_state.controller.left_stick_x;
@@ -72,6 +75,21 @@ fn add_player(mut commands : Commands) {
     .insert(Movement::default());
 }
 
+fn add_enemy(mut commands : Commands) {
+    commands.spawn(SpriteBundle{
+        sprite : Sprite {
+            color: Color::rgb(1.0, 0.0, 0.0),
+            ..default()
+        },
+        transform : Transform {
+            scale : Vec3::new(10.0, 10.0, 10.0),
+            translation : Vec3::new(100.0, 0.0, 0.0),
+            ..default()
+        },
+        ..default()
+    }).insert(Enemy);
+}
+
 pub struct Game;
 
 impl Plugin for Game {
@@ -79,6 +97,7 @@ impl Plugin for Game {
         app.init_resource::<input::InputState>()
             .add_startup_system(setup_camera)
             .add_startup_system(add_player)
+            .add_startup_system(add_enemy)
             .add_system(input::keyboard_events)
             .add_system(input::keyboard_system)
             // .add_system(input::gamepad_events)
