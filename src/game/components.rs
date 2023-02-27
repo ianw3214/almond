@@ -10,7 +10,9 @@ pub struct Movement {
 }
 
 #[derive(Component)]
-pub struct Bullet;
+pub struct Bullet {
+    pub angle : f32
+}
 
 #[derive(Component)]
 pub struct Enemy;

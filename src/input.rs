@@ -6,6 +6,8 @@ const RIGHT_TRIGGER_THRESHOLD : f32 = 0.5;
 pub struct ControllerInputState {
     pub left_stick_x : f32,
     pub left_stick_y : f32,
+    pub right_stick_x : f32,
+    pub right_stick_y : f32,
     pub right_trigger : f32,
     // events
     pub right_trigger_pressed : bool,
@@ -106,6 +108,26 @@ pub fn gamepad_system(
         }
         else {
             input_state.controller.left_stick_y = 0.0;
+        }
+
+        let right_stick_x = axes
+            .get(GamepadAxis::new(gamepad, GamepadAxisType::RightStickX))
+            .unwrap();
+        if right_stick_x.abs() > 0.1 {
+            input_state.controller.right_stick_x = right_stick_x;
+        }
+        else {
+            input_state.controller.right_stick_x = 0.0;
+        }
+
+        let right_stick_y = axes
+            .get(GamepadAxis::new(gamepad, GamepadAxisType::RightStickY))
+            .unwrap();
+        if right_stick_y.abs() > 0.1 {
+            input_state.controller.right_stick_y = right_stick_y;
+        }
+        else {
+            input_state.controller.right_stick_y = 0.0;
         }
     }
     // update events based on state updates

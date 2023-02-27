@@ -10,9 +10,13 @@ fn update_player_movement(mut query : Query<&mut Movement, With<Player>>, input_
     }
 }
 
-fn update_bullet_movement(mut query : Query<&mut Movement, With<Bullet>>) {
-    for mut movement in &mut query {
-        movement.h_movement = 2.0;
+fn update_bullet_movement(mut query : Query<(&mut Movement, &Bullet)>) {
+    for (mut movement, bullet) in &mut query {
+        const BULLET_SPEED : f32 = 2.0;
+        let h_movement = BULLET_SPEED * bullet.angle.cos();
+        let v_movement = BULLET_SPEED * bullet.angle.sin();
+        movement.h_movement = h_movement;
+        movement.v_movement = v_movement;
     }    
 }
 
@@ -40,21 +44,33 @@ fn handle_movement(mut query : Query<(&Movement, &mut Transform)>) {
     }
 }
 
-fn spawn_bullet(mut commands : Commands, input_state : Res<input::InputState>) {
+fn spawn_bullet(
+    mut commands : Commands, 
+    players : Query<&Transform, With<Player>>,
+    input_state : Res<input::InputState>) 
+{
     if input_state.controller.right_trigger_released {
-        commands.spawn(SpriteBundle{
-            sprite : Sprite {
-                color : Color::rgb(0.8, 0.5, 0.5),
+        // TODO: This should depend on player facing instead of held stick angle
+        let mut angle = 0.0;
+        if input_state.controller.right_stick_x != 0.0 || input_state.controller.right_stick_y != 0.0 {
+            angle = input_state.controller.right_stick_y.atan2(input_state.controller.right_stick_x);
+        }
+        for player in players.iter() {
+            commands.spawn(SpriteBundle{
+                sprite : Sprite {
+                    color : Color::rgb(0.8, 0.5, 0.5),
+                    ..default()
+                },
+                transform : Transform {
+                    scale : Vec3::new(3.0, 3.0, 3.0),
+                    translation : player.translation,
+                    ..default()
+                },
                 ..default()
-            },
-            transform : Transform {
-                scale : Vec3::new(3.0, 3.0, 3.0),
-                translation : Vec3::new(0.0, 0.0, 0.0),
-                ..default()
-            },
-            ..default()
-        }).insert(Bullet)
-        .insert(Movement::default());
+            }).insert(Bullet {
+                angle : angle,
+            }).insert(Movement::default());   
+        }
     }
 }
 
