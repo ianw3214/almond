@@ -22,13 +22,13 @@ fn update_bullet_movement(mut query : Query<(&mut Movement, &Bullet)>) {
 
 fn handle_bullet_collision(
     mut commands : Commands,
-    bullets : Query<(Entity, &Transform), With<Bullet>>,
-    targets : Query<(Entity, &Transform), With<Enemy>>) 
+    bullets : Query<(Entity, &WorldPosition, &Transform), With<Bullet>>,
+    targets : Query<(Entity, &WorldPosition, &Transform), With<Enemy>>) 
 {
-    for (bullet, b) in bullets.iter() {
-        for (target, t) in targets.iter() {
-            if b.translation.x < t.translation.x + t.scale.x && b.translation.x + b.scale.x > t.translation.x {
-                if b.translation.y < t.translation.y + t.scale.y && b.translation.y + b.scale.y > t.translation.y { 
+    for (bullet, b_pos, b) in bullets.iter() {
+        for (target, t_pos, t) in targets.iter() {
+            if b_pos.x < t_pos.x + t.scale.x && b_pos.x + b.scale.x > t_pos.x {
+                if b_pos.y < t_pos.y + t.scale.y && b_pos.y + b.scale.y > t_pos.y { 
                     commands.entity(bullet).despawn();
                     commands.entity(target).despawn();
                 }
@@ -37,16 +37,16 @@ fn handle_bullet_collision(
     }
 }
 
-fn handle_movement(mut query : Query<(&Movement, &mut Transform)>) {
-    for (movement, mut transform) in &mut query {
-        transform.translation.x = transform.translation.x + movement.h_movement;
-        transform.translation.y = transform.translation.y + movement.v_movement;
+fn handle_movement(mut query : Query<(&Movement, &mut WorldPosition)>) {
+    for (movement, mut position) in &mut query {
+        position.x = position.x + movement.h_movement;
+        position.y = position.y + movement.v_movement;
     }
 }
 
 fn spawn_bullet(
     mut commands : Commands, 
-    players : Query<&Transform, With<Player>>,
+    players : Query<&WorldPosition, With<Player>>,
     input_state : Res<input::InputState>) 
 {
     if input_state.controller.right_trigger_released {
@@ -63,12 +63,15 @@ fn spawn_bullet(
                 },
                 transform : Transform {
                     scale : Vec3::new(3.0, 3.0, 3.0),
-                    translation : player.translation,
+                    translation : Vec3::new(0.0, 0.0, 0.0),
                     ..default()
                 },
                 ..default()
             }).insert(Bullet {
                 angle : angle,
+            }).insert(WorldPosition{ 
+                x : player.x,
+                y : player.y
             }).insert(Movement::default());   
         }
     }
@@ -91,6 +94,7 @@ fn add_player(mut commands : Commands) {
         },
         ..default()
     }).insert(Player)
+    .insert(WorldPosition{ x : 0.0, y : 0.0})
     .insert(Movement::default());
 }
 
@@ -102,11 +106,19 @@ fn add_enemy(mut commands : Commands) {
         },
         transform : Transform {
             scale : Vec3::new(10.0, 10.0, 10.0),
-            translation : Vec3::new(100.0, 0.0, 0.0),
+            translation : Vec3::new(0.0, 0.0, 0.0),
             ..default()
         },
         ..default()
-    }).insert(Enemy);
+    }).insert(Enemy)
+    .insert(WorldPosition{ x : 100.0, y : 0.0});
+}
+
+fn update_sprite_translation(mut sprites : Query<(&mut Transform, &WorldPosition)>,) {
+    for (mut transform, position) in sprites.iter_mut() {
+        transform.translation.x = position.x;
+        transform.translation.y = position.y;
+    }
 }
 
 pub struct Game;
@@ -125,6 +137,7 @@ impl Plugin for Game {
             .add_system(update_bullet_movement)
             .add_system(handle_bullet_collision)
             .add_system(spawn_bullet)
-            .add_system(handle_movement);
+            .add_system(handle_movement)
+            .add_system(update_sprite_translation);
     }
 }
