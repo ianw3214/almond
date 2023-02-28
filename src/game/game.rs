@@ -17,7 +17,7 @@ fn update_bullet_movement(mut query : Query<(&mut Movement, &Bullet)>) {
         let v_movement = BULLET_SPEED * bullet.angle.sin();
         movement.h_movement = h_movement;
         movement.v_movement = v_movement;
-    }    
+    }
 }
 
 fn handle_bullet_collision(
@@ -61,9 +61,11 @@ fn spawn_bullet(
                     color : Color::rgb(0.8, 0.5, 0.5),
                     ..default()
                 },
+                // The transform translations have to be properly set on spawn for now
+                // This might eventually become some sort of flagging/initizliation system
                 transform : Transform {
                     scale : Vec3::new(3.0, 3.0, 3.0),
-                    translation : Vec3::new(0.0, 0.0, 0.0),
+                    translation : Vec3::new(player.x, player.y, 0.0),
                     ..default()
                 },
                 ..default()
@@ -72,7 +74,7 @@ fn spawn_bullet(
             }).insert(WorldPosition{ 
                 x : player.x,
                 y : player.y
-            }).insert(Movement::default());   
+            }).insert(Movement::default());
         }
     }
 }
@@ -123,21 +125,44 @@ fn update_sprite_translation(mut sprites : Query<(&mut Transform, &WorldPosition
 
 pub struct Game;
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(SystemLabel)]
+enum OrderLabel {
+    /// everything that handles input
+    Input,
+    /// everything that moves things (works with transforms)
+    GameState,
+    /// systems that affect rendering
+    Rendering,
+}
+
 impl Plugin for Game {
     fn build(&self, app : &mut App) {
         app.init_resource::<input::InputState>()
             .add_startup_system(setup_camera)
             .add_startup_system(add_player)
             .add_startup_system(add_enemy)
-            .add_system(input::keyboard_events)
-            .add_system(input::keyboard_system)
             // .add_system(input::gamepad_events)
-            .add_system(input::gamepad_system)
-            .add_system(update_player_movement)
-            .add_system(update_bullet_movement)
-            .add_system(handle_bullet_collision)
-            .add_system(spawn_bullet)
-            .add_system(handle_movement)
-            .add_system(update_sprite_translation);
+            .add_system_set(
+                SystemSet::new()
+                    .label(OrderLabel::Input)
+                    .with_system(input::keyboard_events)
+                    .with_system(input::keyboard_system)
+                    .with_system(input::gamepad_system)
+            ).add_system_set(
+                SystemSet::new()
+                    .label(OrderLabel::GameState)
+                    .after(OrderLabel::Input)
+                    .before(OrderLabel::Rendering)
+                    .with_system(update_player_movement)
+                    .with_system(update_bullet_movement)
+                    .with_system(handle_bullet_collision)
+                    .with_system(spawn_bullet)
+                    .with_system(handle_movement)
+            )
+            .add_system(update_sprite_translation
+                .label(OrderLabel::Rendering)
+                .after(OrderLabel::GameState)
+            );
     }
 }
