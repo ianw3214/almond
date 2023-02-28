@@ -83,17 +83,9 @@ fn setup_camera(mut commands : Commands) {
     commands.spawn(Camera2dBundle::default());
 }
 
-fn add_player(mut commands : Commands) {
+fn add_player(mut commands : Commands, asset_server: Res<AssetServer>) {
     commands.spawn(SpriteBundle {
-        sprite : Sprite { 
-            color: Color::rgb(0.6, 0.6, 0.6), 
-            ..default()
-        },
-        transform : Transform {
-            scale : Vec3::new(10.0, 10.0, 10.0),
-            translation : Vec3::new(0.0, 0.0, 0.0),
-            ..default()
-        },
+        texture : asset_server.load("test.png"),
         ..default()
     }).insert(Player)
     .insert(WorldPosition{ x : 0.0, y : 0.0})
