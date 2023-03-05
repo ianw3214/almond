@@ -43,17 +43,19 @@ fn handle_movement(mut query : Query<(&Movement, &mut WorldPosition, &mut Animat
     for (movement, mut position, mut anim) in &mut query {
         position.x = position.x + movement.h_movement;
         position.y = position.y + movement.v_movement;
-        if movement.h_movement < 0.3 {
-            anim.events.push(String::from("left"));
-        }
-        if movement.h_movement > 0.3 {
-            anim.events.push(String::from("right"));
-        }
-        if movement.v_movement < 0.3 {
-            anim.events.push(String::from("down"));
-        }
-        if movement.v_movement > 0.3 {
-            anim.events.push(String::from("up"));
+        let angle = movement.v_movement.atan2(movement.h_movement);
+        if movement.h_movement != 0.0 || movement.v_movement != 0.0 {
+            if angle > std::f32::consts::FRAC_PI_4 * 3.0 || angle < -std::f32::consts::FRAC_PI_4 * 3.0 {
+                anim.events.push(String::from("left"));
+            } else {
+                if angle > std::f32::consts::FRAC_PI_4 {
+                    anim.events.push(String::from("up"));
+                } else if angle < -std::f32::consts::FRAC_PI_4 {
+                    anim.events.push(String::from("down"));
+                } else {
+                    anim.events.push(String::from("right"));
+                }
+            }
         }
     }
 }
@@ -64,7 +66,7 @@ fn spawn_bullet(
     input_state : Res<input::InputState>) 
 {
     if input_state.controller.right_trigger_released {
-        // TODO: This angle seems useful for multiple things, might be useful to cache in a component
+        // TODO: This should depend on player facing instead of held stick angle
         let mut angle = 0.0;
         if input_state.controller.right_stick_x != 0.0 || input_state.controller.right_stick_y != 0.0 {
             angle = input_state.controller.right_stick_y.atan2(input_state.controller.right_stick_x);
