@@ -42,7 +42,12 @@ pub struct AnimationTree {
 
 #[derive(Component)]
 pub struct Animation {
+    // TODO: This might want to be global so animations can update at the same time
     pub timer : Timer,
+    // TODO: Turning this into an animationRequestComponent or something might be cleaner
+    //  - Events might also be an option, need to do some research
+    //  - https://bevy-cheatbook.github.io/programming/events.html
+    pub events : Vec<String>,
     // TODO: Turn this into an asset handle
     pub tree : AnimationTree
 }

@@ -39,10 +39,22 @@ fn handle_bullet_collision(
     }
 }
 
-fn handle_movement(mut query : Query<(&Movement, &mut WorldPosition)>) {
-    for (movement, mut position) in &mut query {
+fn handle_movement(mut query : Query<(&Movement, &mut WorldPosition, &mut Animation)>) {
+    for (movement, mut position, mut anim) in &mut query {
         position.x = position.x + movement.h_movement;
         position.y = position.y + movement.v_movement;
+        if movement.h_movement < 0.3 {
+            anim.events.push(String::from("left"));
+        }
+        if movement.h_movement > 0.3 {
+            anim.events.push(String::from("right"));
+        }
+        if movement.v_movement < 0.3 {
+            anim.events.push(String::from("down"));
+        }
+        if movement.v_movement > 0.3 {
+            anim.events.push(String::from("up"));
+        }
     }
 }
 
@@ -52,7 +64,7 @@ fn spawn_bullet(
     input_state : Res<input::InputState>) 
 {
     if input_state.controller.right_trigger_released {
-        // TODO: This should depend on player facing instead of held stick angle
+        // TODO: This angle seems useful for multiple things, might be useful to cache in a component
         let mut angle = 0.0;
         if input_state.controller.right_stick_x != 0.0 || input_state.controller.right_stick_y != 0.0 {
             angle = input_state.controller.right_stick_y.atan2(input_state.controller.right_stick_x);
@@ -105,8 +117,8 @@ fn add_player(
     down_transitions.insert(String::from("left"), String::from("left"));
     down_transitions.insert(String::from("right"), String::from("right"));
     let down_state = AnimationState {
-        start_frame : 0,
-        end_frame : 3,
+        start_frame : 4,
+        end_frame : 7,
         transitions : down_transitions
     };
 
@@ -115,8 +127,8 @@ fn add_player(
     left_transitions.insert(String::from("down"), String::from("down"));
     left_transitions.insert(String::from("right"), String::from("right"));
     let left_state = AnimationState {
-        start_frame : 0,
-        end_frame : 3,
+        start_frame : 8,
+        end_frame : 11,
         transitions : left_transitions
     };
 
@@ -125,8 +137,8 @@ fn add_player(
     right_transitions.insert(String::from("down"), String::from("down"));
     right_transitions.insert(String::from("left"), String::from("left"));
     let right_state = AnimationState {
-        start_frame : 0,
-        end_frame : 3,
+        start_frame : 12,
+        end_frame : 15,
         transitions : right_transitions
     };
 
@@ -137,7 +149,7 @@ fn add_player(
     player_animation_tree.insert(String::from("right"), right_state);
 
     let texture_handle = asset_server.load("test.png");
-    let texture_atlas = TextureAtlas::from_grid(texture_handle, Vec2::new(10.0, 10.0), 4, 1, None, None);
+    let texture_atlas = TextureAtlas::from_grid(texture_handle, Vec2::new(10.0, 10.0), 4, 4, None, None);
     let texture_atlas_handle = texture_atlases.add(texture_atlas);
     commands.spawn(SpriteSheetBundle {
         texture_atlas : texture_atlas_handle,
@@ -145,6 +157,7 @@ fn add_player(
     }).insert(Player)
     .insert(Animation{
         timer : Timer::from_seconds(0.1, TimerMode::Repeating),
+        events : Vec::new(),
         tree : AnimationTree {
             states : player_animation_tree,
             current_state : String::from("right")
@@ -182,6 +195,22 @@ fn update_sprite_animation(
     mut query : Query<(&mut Animation, &mut TextureAtlasSprite)>) 
 {
     for (mut anim, mut sprite) in &mut query {
+        // handle animation events
+        let initial_state = anim.tree.current_state.clone();
+        let mut curr_state = &anim.tree.current_state;
+        for event in &anim.events {
+            let state = anim.tree.states.get(curr_state).unwrap();
+            let new_state = state.transitions.get(event);
+            curr_state = match new_state {
+                Some(name) => name,
+                _ => curr_state
+            };
+        }
+        if initial_state != curr_state.clone() {
+            sprite.index = anim.tree.states.get(curr_state).unwrap().start_frame;
+        }
+        anim.tree.current_state = curr_state.to_string();
+        // update the actual animation frame
         anim.timer.tick(time.delta());
         if anim.timer.just_finished() {
             let next_index = sprite.index + 1;
