@@ -83,11 +83,19 @@ fn setup_camera(mut commands : Commands) {
     commands.spawn(Camera2dBundle::default());
 }
 
-fn add_player(mut commands : Commands, asset_server: Res<AssetServer>) {
-    commands.spawn(SpriteBundle {
-        texture : asset_server.load("test.png"),
+fn add_player(
+    mut commands : Commands, 
+    asset_server: Res<AssetServer>,
+    mut texture_atlases: ResMut<Assets<TextureAtlas>>) 
+{
+    let texture_handle = asset_server.load("test.png");
+    let texture_atlas = TextureAtlas::from_grid(texture_handle, Vec2::new(10.0, 10.0), 4, 1, None, None);
+    let texture_atlas_handle = texture_atlases.add(texture_atlas);
+    commands.spawn(SpriteSheetBundle {
+        texture_atlas : texture_atlas_handle,
         ..default()
     }).insert(Player)
+    .insert(AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)))
     .insert(WorldPosition{ x : 0.0, y : 0.0})
     .insert(Movement::default());
 }
@@ -112,6 +120,20 @@ fn update_sprite_translation(mut sprites : Query<(&mut Transform, &WorldPosition
     for (mut transform, position) in sprites.iter_mut() {
         transform.translation.x = position.x;
         transform.translation.y = position.y;
+    }
+}
+
+fn update_sprite_animation(
+    time : Res<Time>,
+    texture_atlases : Res<Assets<TextureAtlas>>,
+    mut query : Query<(&mut AnimationTimer, &mut TextureAtlasSprite, &Handle<TextureAtlas>)>) 
+{
+    for (mut timer, mut sprite, texture_atlas_handle) in &mut query {
+        timer.0.tick(time.delta());
+        if timer.0.just_finished() {
+            let texture_atlas = texture_atlases.get(texture_atlas_handle).unwrap();
+            sprite.index = (sprite.index + 1) % texture_atlas.textures.len();
+        }
     }
 }
 
@@ -152,9 +174,12 @@ impl Plugin for Game {
                     .with_system(spawn_bullet)
                     .with_system(handle_movement)
             )
-            .add_system(update_sprite_translation
-                .label(OrderLabel::Rendering)
-                .after(OrderLabel::GameState)
+            .add_system_set(
+                SystemSet::new()
+                    .label(OrderLabel::Rendering)
+                    .after(OrderLabel::GameState)
+                    .with_system(update_sprite_translation)
+                    .with_system(update_sprite_animation)
             );
     }
 }

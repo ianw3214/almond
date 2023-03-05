@@ -22,3 +22,7 @@ pub struct Bullet {
 
 #[derive(Component)]
 pub struct Enemy;
+
+// Rendering / animation
+#[derive(Component)]
+pub struct AnimationTimer(pub Timer);
