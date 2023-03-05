@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use bevy::prelude::*;
 
 use crate::game::components::*;
@@ -88,6 +90,52 @@ fn add_player(
     asset_server: Res<AssetServer>,
     mut texture_atlases: ResMut<Assets<TextureAtlas>>) 
 {
+    let mut up_transitions = HashMap::new();
+    up_transitions.insert(String::from("down"), String::from("down"));
+    up_transitions.insert(String::from("left"), String::from("left"));
+    up_transitions.insert(String::from("right"), String::from("right"));
+    let up_state = AnimationState {
+        start_frame : 0,
+        end_frame : 3,
+        transitions : up_transitions
+    };
+
+    let mut down_transitions = HashMap::new();
+    down_transitions.insert(String::from("up"), String::from("up"));
+    down_transitions.insert(String::from("left"), String::from("left"));
+    down_transitions.insert(String::from("right"), String::from("right"));
+    let down_state = AnimationState {
+        start_frame : 0,
+        end_frame : 3,
+        transitions : down_transitions
+    };
+
+    let mut left_transitions = HashMap::new();
+    left_transitions.insert(String::from("up"), String::from("up"));
+    left_transitions.insert(String::from("down"), String::from("down"));
+    left_transitions.insert(String::from("right"), String::from("right"));
+    let left_state = AnimationState {
+        start_frame : 0,
+        end_frame : 3,
+        transitions : left_transitions
+    };
+
+    let mut right_transitions = HashMap::new();
+    right_transitions.insert(String::from("up"), String::from("up"));
+    right_transitions.insert(String::from("down"), String::from("down"));
+    right_transitions.insert(String::from("left"), String::from("left"));
+    let right_state = AnimationState {
+        start_frame : 0,
+        end_frame : 3,
+        transitions : right_transitions
+    };
+
+    let mut player_animation_tree = HashMap::new();
+    player_animation_tree.insert(String::from("up"), up_state);
+    player_animation_tree.insert(String::from("down"), down_state);
+    player_animation_tree.insert(String::from("left"), left_state);
+    player_animation_tree.insert(String::from("right"), right_state);
+
     let texture_handle = asset_server.load("test.png");
     let texture_atlas = TextureAtlas::from_grid(texture_handle, Vec2::new(10.0, 10.0), 4, 1, None, None);
     let texture_atlas_handle = texture_atlases.add(texture_atlas);
@@ -95,7 +143,13 @@ fn add_player(
         texture_atlas : texture_atlas_handle,
         ..default()
     }).insert(Player)
-    .insert(AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)))
+    .insert(Animation{
+        timer : Timer::from_seconds(0.1, TimerMode::Repeating),
+        tree : AnimationTree {
+            states : player_animation_tree,
+            current_state : String::from("right")
+        }
+    })
     .insert(WorldPosition{ x : 0.0, y : 0.0})
     .insert(Movement::default());
 }
@@ -125,14 +179,14 @@ fn update_sprite_translation(mut sprites : Query<(&mut Transform, &WorldPosition
 
 fn update_sprite_animation(
     time : Res<Time>,
-    texture_atlases : Res<Assets<TextureAtlas>>,
-    mut query : Query<(&mut AnimationTimer, &mut TextureAtlasSprite, &Handle<TextureAtlas>)>) 
+    mut query : Query<(&mut Animation, &mut TextureAtlasSprite)>) 
 {
-    for (mut timer, mut sprite, texture_atlas_handle) in &mut query {
-        timer.0.tick(time.delta());
-        if timer.0.just_finished() {
-            let texture_atlas = texture_atlases.get(texture_atlas_handle).unwrap();
-            sprite.index = (sprite.index + 1) % texture_atlas.textures.len();
+    for (mut anim, mut sprite) in &mut query {
+        anim.timer.tick(time.delta());
+        if anim.timer.just_finished() {
+            let next_index = sprite.index + 1;
+            let curr_state = anim.tree.states.get(&anim.tree.current_state).unwrap();
+            sprite.index = if next_index > curr_state.end_frame { curr_state.start_frame } else { next_index };
         }
     }
 }

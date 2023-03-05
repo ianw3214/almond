@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{prelude::*};
 
 #[derive(Component)]
 pub struct Player;
@@ -23,6 +23,26 @@ pub struct Bullet {
 #[derive(Component)]
 pub struct Enemy;
 
+/////////////////////////////////////////////
 // Rendering / animation
+
+pub struct AnimationState {
+    pub start_frame : usize,
+    pub end_frame : usize,
+    pub transitions : std::collections::HashMap<String, String>
+}
+
+// TODO: This struct should be an asset that can be shared across different sprites
+pub struct AnimationTree {
+    pub states : std::collections::HashMap<String, AnimationState>,
+
+    // TODO: When this is turned into an asset, each entity will need to store these separately
+    pub current_state : String
+}
+
 #[derive(Component)]
-pub struct AnimationTimer(pub Timer);
+pub struct Animation {
+    pub timer : Timer,
+    // TODO: Turn this into an asset handle
+    pub tree : AnimationTree
+}
