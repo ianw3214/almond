@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 
 use bevy::prelude::*;
+use bevy::render::render_resource::{FilterMode, SamplerDescriptor};
+use bevy::render::texture::ImageSampler::Descriptor;
 
 use crate::game::components::*;
 use crate::input;
@@ -150,8 +152,10 @@ fn add_player(
     player_animation_tree.insert(String::from("left"), left_state);
     player_animation_tree.insert(String::from("right"), right_state);
 
+    let frame_width : f32 = 10.0;
+    let frame_height : f32 = 10.0;
     let texture_handle = asset_server.load("test.png");
-    let texture_atlas = TextureAtlas::from_grid(texture_handle, Vec2::new(10.0, 10.0), 4, 4, None, None);
+    let texture_atlas = TextureAtlas::from_grid(texture_handle, Vec2::new(frame_width, frame_height), 4, 4, None, None);
     let texture_atlas_handle = texture_atlases.add(texture_atlas);
     commands.spawn(SpriteSheetBundle {
         texture_atlas : texture_atlas_handle,
@@ -164,6 +168,10 @@ fn add_player(
             states : player_animation_tree,
             current_state : String::from("right")
         }
+    })
+    .insert(RenderInfo {
+        screen_width : 100.0,
+        screen_height : 100.0
     })
     .insert(WorldPosition{ x : 0.0, y : 0.0})
     .insert(Movement::default());
@@ -223,6 +231,37 @@ fn update_sprite_animation(
     }
 }
 
+fn update_sprite_size(mut query : Query<(&mut RenderInfo, &mut TextureAtlasSprite)>) {
+    for (render_info, mut sprite) in &mut query {
+        sprite.custom_size = Some(Vec2::new(render_info.screen_width, render_info.screen_height));
+    }
+}
+
+fn fixup_sprites(
+    mut asset_events : EventReader<AssetEvent<Image>>,
+    mut assets : ResMut<Assets<Image>>) 
+{
+    for ev in asset_events.iter() {
+        match ev {
+            AssetEvent::Created { handle } => {
+                let mut texture = assets.get_mut(handle).unwrap();
+                texture.sampler_descriptor = Descriptor(SamplerDescriptor {
+                    mag_filter : FilterMode::Nearest,
+                    min_filter : FilterMode::Nearest,
+                    mipmap_filter : FilterMode::Nearest,
+                    ..default()
+                });
+            }
+            AssetEvent::Modified { handle : _ } => {
+                println!("ASSET MODIFIED\n");
+            }
+            AssetEvent::Removed { handle : _ } => {
+                println!("ASSET REMOVED\n");
+            }
+        }
+    }
+}
+
 pub struct Game;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -242,6 +281,7 @@ impl Plugin for Game {
             .add_startup_system(setup_camera)
             .add_startup_system(add_player)
             .add_startup_system(add_enemy)
+            .add_system(fixup_sprites)
             // .add_system(input::gamepad_events)
             .add_system_set(
                 SystemSet::new()
@@ -266,6 +306,7 @@ impl Plugin for Game {
                     .after(OrderLabel::GameState)
                     .with_system(update_sprite_translation)
                     .with_system(update_sprite_animation)
+                    .with_system(update_sprite_size)
             );
     }
 }

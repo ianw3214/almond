@@ -53,3 +53,9 @@ pub struct Animation {
     // TODO: Turn this into an asset handle
     pub tree : AnimationTree
 }
+
+#[derive (Component)]
+pub struct RenderInfo {
+    pub screen_width : f32,
+    pub screen_height : f32
+}
