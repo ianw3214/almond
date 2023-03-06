@@ -33,6 +33,8 @@ pub struct AnimationState {
 }
 
 // TODO: This struct should be an asset that can be shared across different sprites
+//  - this crate can potentially be used to implement the asset loading
+//  - https://docs.rs/bevy_common_assets/latest/bevy_common_assets/
 pub struct AnimationTree {
     pub states : std::collections::HashMap<String, AnimationState>,
 

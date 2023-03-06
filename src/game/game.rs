@@ -5,10 +5,24 @@ use bevy::prelude::*;
 use crate::game::components::*;
 use crate::input;
 
-fn update_player_movement(mut query : Query<&mut Movement, With<Player>>, input_state : Res<input::InputState>) {
-    for mut movement in &mut query {
+fn update_player_movement(mut query : Query<(&mut Movement, &mut Animation), With<Player>>, input_state : Res<input::InputState>) {
+    for (mut movement, mut anim) in &mut query {
         movement.h_movement = input_state.controller.left_stick_x;
         movement.v_movement = input_state.controller.left_stick_y;
+        let angle = movement.v_movement.atan2(movement.h_movement);
+        if movement.h_movement != 0.0 || movement.v_movement != 0.0 {
+            if angle > std::f32::consts::FRAC_PI_4 * 3.0 || angle < -std::f32::consts::FRAC_PI_4 * 3.0 {
+                anim.events.push(String::from("left"));
+            } else {
+                if angle > std::f32::consts::FRAC_PI_4 {
+                    anim.events.push(String::from("up"));
+                } else if angle < -std::f32::consts::FRAC_PI_4 {
+                    anim.events.push(String::from("down"));
+                } else {
+                    anim.events.push(String::from("right"));
+                }
+            }
+        }
     }
 }
 
@@ -39,24 +53,10 @@ fn handle_bullet_collision(
     }
 }
 
-fn handle_movement(mut query : Query<(&Movement, &mut WorldPosition, &mut Animation)>) {
-    for (movement, mut position, mut anim) in &mut query {
+fn handle_movement(mut query : Query<(&Movement, &mut WorldPosition)>) {
+    for (movement, mut position) in &mut query {
         position.x = position.x + movement.h_movement;
         position.y = position.y + movement.v_movement;
-        let angle = movement.v_movement.atan2(movement.h_movement);
-        if movement.h_movement != 0.0 || movement.v_movement != 0.0 {
-            if angle > std::f32::consts::FRAC_PI_4 * 3.0 || angle < -std::f32::consts::FRAC_PI_4 * 3.0 {
-                anim.events.push(String::from("left"));
-            } else {
-                if angle > std::f32::consts::FRAC_PI_4 {
-                    anim.events.push(String::from("up"));
-                } else if angle < -std::f32::consts::FRAC_PI_4 {
-                    anim.events.push(String::from("down"));
-                } else {
-                    anim.events.push(String::from("right"));
-                }
-            }
-        }
     }
 }
 
@@ -212,6 +212,7 @@ fn update_sprite_animation(
             sprite.index = anim.tree.states.get(curr_state).unwrap().start_frame;
         }
         anim.tree.current_state = curr_state.to_string();
+        anim.events.clear();
         // update the actual animation frame
         anim.timer.tick(time.delta());
         if anim.timer.just_finished() {
