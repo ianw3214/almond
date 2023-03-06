@@ -155,7 +155,7 @@ fn add_player(
     let frame_width : f32 = 10.0;
     let frame_height : f32 = 10.0;
     let texture_handle = asset_server.load("test.png");
-    let texture_atlas = TextureAtlas::from_grid(texture_handle, Vec2::new(frame_width, frame_height), 4, 4, None, None);
+    let texture_atlas = TextureAtlas::from_grid(texture_handle, Vec2::new(frame_width, frame_height), 4, 4, Some(Vec2::new(1.0, 1.0)), None);
     let texture_atlas_handle = texture_atlases.add(texture_atlas);
     commands.spawn(SpriteSheetBundle {
         texture_atlas : texture_atlas_handle,
