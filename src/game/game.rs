@@ -104,7 +104,8 @@ fn setup_camera(mut commands : Commands) {
 fn add_player(
     mut commands : Commands, 
     asset_server: Res<AssetServer>,
-    mut texture_atlases: ResMut<Assets<TextureAtlas>>) 
+    mut texture_atlases: ResMut<Assets<TextureAtlas>>,
+    mut animation_trees : ResMut<Assets<AnimationTree>>) 
 {
     let mut up_transitions = HashMap::new();
     up_transitions.insert(String::from("down"), String::from("down"));
@@ -157,6 +158,11 @@ fn add_player(
     let texture_handle = asset_server.load("test.png");
     let texture_atlas = TextureAtlas::from_grid(texture_handle, Vec2::new(frame_width, frame_height), 4, 4, Some(Vec2::new(1.0, 1.0)), None);
     let texture_atlas_handle = texture_atlases.add(texture_atlas);
+    let player_anim_tree = AnimationTree {
+        states : player_animation_tree,
+        current_state : String::from("right")
+    };
+    let animation_tree_handle = animation_trees.add(player_anim_tree);
     commands.spawn(SpriteSheetBundle {
         texture_atlas : texture_atlas_handle,
         ..default()
@@ -164,10 +170,7 @@ fn add_player(
     .insert(Animation{
         timer : Timer::from_seconds(0.1, TimerMode::Repeating),
         events : Vec::new(),
-        tree : AnimationTree {
-            states : player_animation_tree,
-            current_state : String::from("right")
-        }
+        tree : animation_tree_handle
     })
     .insert(RenderInfo {
         screen_width : 100.0,
@@ -202,14 +205,16 @@ fn update_sprite_translation(mut sprites : Query<(&mut Transform, &WorldPosition
 
 fn update_sprite_animation(
     time : Res<Time>,
+    mut animation_trees : ResMut<Assets<AnimationTree>>,
     mut query : Query<(&mut Animation, &mut TextureAtlasSprite)>) 
 {
     for (mut anim, mut sprite) in &mut query {
         // handle animation events
-        let initial_state = anim.tree.current_state.clone();
-        let mut curr_state = &anim.tree.current_state;
+        let anim_tree = animation_trees.get_mut(&anim.tree).unwrap();
+        let initial_state = anim_tree.current_state.clone();
+        let mut curr_state = &anim_tree.current_state;
         for event in &anim.events {
-            let state = anim.tree.states.get(curr_state).unwrap();
+            let state = anim_tree.states.get(curr_state).unwrap();
             let new_state = state.transitions.get(event);
             curr_state = match new_state {
                 Some(name) => name,
@@ -217,15 +222,15 @@ fn update_sprite_animation(
             };
         }
         if initial_state != curr_state.clone() {
-            sprite.index = anim.tree.states.get(curr_state).unwrap().start_frame;
+            sprite.index = anim_tree.states.get(curr_state).unwrap().start_frame;
         }
-        anim.tree.current_state = curr_state.to_string();
+        anim_tree.current_state = curr_state.to_string();
         anim.events.clear();
         // update the actual animation frame
         anim.timer.tick(time.delta());
         if anim.timer.just_finished() {
             let next_index = sprite.index + 1;
-            let curr_state = anim.tree.states.get(&anim.tree.current_state).unwrap();
+            let curr_state = anim_tree.states.get(&anim_tree.current_state).unwrap();
             sprite.index = if next_index > curr_state.end_frame { curr_state.start_frame } else { next_index };
         }
     }
@@ -278,6 +283,7 @@ enum OrderLabel {
 impl Plugin for Game {
     fn build(&self, app : &mut App) {
         app.init_resource::<input::InputState>()
+            .add_asset::<AnimationTree>()
             .add_startup_system(setup_camera)
             .add_startup_system(add_player)
             .add_startup_system(add_enemy)

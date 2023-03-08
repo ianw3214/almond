@@ -1,4 +1,4 @@
-use bevy::{prelude::*};
+use bevy::{prelude::*, reflect::TypeUuid};
 
 #[derive(Component)]
 pub struct Player;
@@ -26,15 +26,15 @@ pub struct Enemy;
 /////////////////////////////////////////////
 // Rendering / animation
 
+#[derive(Debug)]
 pub struct AnimationState {
     pub start_frame : usize,
     pub end_frame : usize,
     pub transitions : std::collections::HashMap<String, String>
 }
 
-// TODO: This struct should be an asset that can be shared across different sprites
-//  - this crate can potentially be used to implement the asset loading
-//  - https://docs.rs/bevy_common_assets/latest/bevy_common_assets/
+#[derive(Debug, TypeUuid)]
+#[uuid = "39cadc56-aa9c-4543-8640-a018b74b5052"]
 pub struct AnimationTree {
     pub states : std::collections::HashMap<String, AnimationState>,
 
@@ -50,8 +50,8 @@ pub struct Animation {
     //  - Events might also be an option, need to do some research
     //  - https://bevy-cheatbook.github.io/programming/events.html
     pub events : Vec<String>,
-    // TODO: Turn this into an asset handle
-    pub tree : AnimationTree
+
+    pub tree : Handle<AnimationTree>
 }
 
 #[derive (Component)]
