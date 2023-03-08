@@ -37,9 +37,7 @@ pub struct AnimationState {
 #[uuid = "39cadc56-aa9c-4543-8640-a018b74b5052"]
 pub struct AnimationTree {
     pub states : std::collections::HashMap<String, AnimationState>,
-
-    // TODO: When this is turned into an asset, each entity will need to store these separately
-    pub current_state : String
+    pub initial : String
 }
 
 #[derive(Component)]
@@ -51,6 +49,7 @@ pub struct Animation {
     //  - https://bevy-cheatbook.github.io/programming/events.html
     pub events : Vec<String>,
 
+    pub current_state : String,
     pub tree : Handle<AnimationTree>
 }
 

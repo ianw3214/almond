@@ -160,7 +160,7 @@ fn add_player(
     let texture_atlas_handle = texture_atlases.add(texture_atlas);
     let player_anim_tree = AnimationTree {
         states : player_animation_tree,
-        current_state : String::from("right")
+        initial : String::from("right")
     };
     let animation_tree_handle = animation_trees.add(player_anim_tree);
     commands.spawn(SpriteSheetBundle {
@@ -170,6 +170,7 @@ fn add_player(
     .insert(Animation{
         timer : Timer::from_seconds(0.1, TimerMode::Repeating),
         events : Vec::new(),
+        current_state : String::new(),
         tree : animation_tree_handle
     })
     .insert(RenderInfo {
@@ -205,14 +206,14 @@ fn update_sprite_translation(mut sprites : Query<(&mut Transform, &WorldPosition
 
 fn update_sprite_animation(
     time : Res<Time>,
-    mut animation_trees : ResMut<Assets<AnimationTree>>,
+    animation_trees : Res<Assets<AnimationTree>>,
     mut query : Query<(&mut Animation, &mut TextureAtlasSprite)>) 
 {
     for (mut anim, mut sprite) in &mut query {
         // handle animation events
-        let anim_tree = animation_trees.get_mut(&anim.tree).unwrap();
-        let initial_state = anim_tree.current_state.clone();
-        let mut curr_state = &anim_tree.current_state;
+        let anim_tree = animation_trees.get(&anim.tree).unwrap();
+        let initial_state = anim.current_state.clone();
+        let mut curr_state = &anim.current_state;
         for event in &anim.events {
             let state = anim_tree.states.get(curr_state).unwrap();
             let new_state = state.transitions.get(event);
@@ -224,13 +225,13 @@ fn update_sprite_animation(
         if initial_state != curr_state.clone() {
             sprite.index = anim_tree.states.get(curr_state).unwrap().start_frame;
         }
-        anim_tree.current_state = curr_state.to_string();
+        anim.current_state = curr_state.to_string();
         anim.events.clear();
         // update the actual animation frame
         anim.timer.tick(time.delta());
         if anim.timer.just_finished() {
             let next_index = sprite.index + 1;
-            let curr_state = anim_tree.states.get(&anim_tree.current_state).unwrap();
+            let curr_state = anim_tree.states.get(&anim.current_state).unwrap();
             sprite.index = if next_index > curr_state.end_frame { curr_state.start_frame } else { next_index };
         }
     }
@@ -258,10 +259,35 @@ fn fixup_sprites(
                 });
             }
             AssetEvent::Modified { handle : _ } => {
-                println!("ASSET MODIFIED\n");
+                println!("IMAGE ASSET MODIFIED\n");
             }
             AssetEvent::Removed { handle : _ } => {
-                println!("ASSET REMOVED\n");
+                println!("IMAGE ASSET REMOVED\n");
+            }
+        }
+    }
+}
+
+fn initialize_anim_states(
+    mut asset_events : EventReader<AssetEvent<AnimationTree>>,
+    animation_trees : Res<Assets<AnimationTree>>,
+    mut query : Query<&mut Animation>) 
+{
+    for ev in asset_events.iter() {
+        match ev {
+            AssetEvent::Created { handle } => {
+                let anim_tree = animation_trees.get(handle).unwrap();
+                for mut anim in query.iter_mut() {
+                    if anim.tree == *handle {
+                        anim.current_state = anim_tree.initial.clone();
+                    }
+                }
+            }
+            AssetEvent::Modified { handle : _ } => {
+                println!("ANIMATION TREE ASSET MODIFIED\n");
+            }
+            AssetEvent::Removed { handle : _ } => {
+                println!("ANIMATION TREE ASSET REMOVED\n");
             }
         }
     }
@@ -288,6 +314,7 @@ impl Plugin for Game {
             .add_startup_system(add_player)
             .add_startup_system(add_enemy)
             .add_system(fixup_sprites)
+            .add_system(initialize_anim_states)
             // .add_system(input::gamepad_events)
             .add_system_set(
                 SystemSet::new()
