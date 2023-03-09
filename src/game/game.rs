@@ -3,10 +3,26 @@ use bevy::prelude::*;
 use crate::game::components::*;
 use crate::input;
 
-fn update_player_movement(mut query : Query<&mut Movement, With<Player>>, input_state : Res<input::InputState>) {
-    for mut movement in &mut query {
+use crate::game::graphics;
+
+fn update_player_movement(mut query : Query<(&mut Movement, &mut Animation), With<Player>>, input_state : Res<input::InputState>) {
+    for (mut movement, mut anim) in &mut query {
         movement.h_movement = input_state.controller.left_stick_x;
         movement.v_movement = input_state.controller.left_stick_y;
+        let angle = movement.v_movement.atan2(movement.h_movement);
+        if movement.h_movement != 0.0 || movement.v_movement != 0.0 {
+            if angle > std::f32::consts::FRAC_PI_4 * 3.0 || angle < -std::f32::consts::FRAC_PI_4 * 3.0 {
+                anim.events.push(String::from("left"));
+            } else {
+                if angle > std::f32::consts::FRAC_PI_4 {
+                    anim.events.push(String::from("up"));
+                } else if angle < -std::f32::consts::FRAC_PI_4 {
+                    anim.events.push(String::from("down"));
+                } else {
+                    anim.events.push(String::from("right"));
+                }
+            }
+        }
     }
 }
 
@@ -83,19 +99,31 @@ fn setup_camera(mut commands : Commands) {
     commands.spawn(Camera2dBundle::default());
 }
 
-fn add_player(mut commands : Commands) {
-    commands.spawn(SpriteBundle {
-        sprite : Sprite { 
-            color: Color::rgb(0.6, 0.6, 0.6), 
-            ..default()
-        },
-        transform : Transform {
-            scale : Vec3::new(10.0, 10.0, 10.0),
-            translation : Vec3::new(0.0, 0.0, 0.0),
-            ..default()
-        },
+fn add_player(
+    mut commands : Commands, 
+    asset_server: Res<AssetServer>,
+    mut texture_atlases: ResMut<Assets<TextureAtlas>>,
+    anim_trees : Res<graphics::AnimationTreeHandles>) 
+{
+    let frame_width : f32 = 10.0;
+    let frame_height : f32 = 10.0;
+    let texture_handle = asset_server.load("test.png");
+    let texture_atlas = TextureAtlas::from_grid(texture_handle, Vec2::new(frame_width, frame_height), 4, 4, Some(Vec2::new(1.0, 1.0)), None);
+    let texture_atlas_handle = texture_atlases.add(texture_atlas);
+    commands.spawn(SpriteSheetBundle {
+        texture_atlas : texture_atlas_handle,
         ..default()
     }).insert(Player)
+    .insert(Animation{
+        timer : Timer::from_seconds(0.1, TimerMode::Repeating),
+        events : Vec::new(),
+        current_state : String::new(),
+        tree : anim_trees.handle_map.get("player").unwrap().clone()
+    })
+    .insert(RenderInfo {
+        screen_width : 100.0,
+        screen_height : 100.0
+    })
     .insert(WorldPosition{ x : 0.0, y : 0.0})
     .insert(Movement::default());
 }
@@ -116,13 +144,6 @@ fn add_enemy(mut commands : Commands) {
     .insert(WorldPosition{ x : 100.0, y : 0.0});
 }
 
-fn update_sprite_translation(mut sprites : Query<(&mut Transform, &WorldPosition)>,) {
-    for (mut transform, position) in sprites.iter_mut() {
-        transform.translation.x = position.x;
-        transform.translation.y = position.y;
-    }
-}
-
 pub struct Game;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -139,9 +160,15 @@ enum OrderLabel {
 impl Plugin for Game {
     fn build(&self, app : &mut App) {
         app.init_resource::<input::InputState>()
+            .init_resource::<graphics::AnimationTreeHandles>()
+            .add_asset::<AnimationTree>()
+            .add_startup_system(graphics::initialize_anim_trees
+                .before(add_player))
             .add_startup_system(setup_camera)
             .add_startup_system(add_player)
             .add_startup_system(add_enemy)
+            .add_system(graphics::fixup_sprites)
+            .add_system(graphics::initialize_anim_states)
             // .add_system(input::gamepad_events)
             .add_system_set(
                 SystemSet::new()
@@ -160,9 +187,13 @@ impl Plugin for Game {
                     .with_system(spawn_bullet)
                     .with_system(handle_movement)
             )
-            .add_system(update_sprite_translation
-                .label(OrderLabel::Rendering)
-                .after(OrderLabel::GameState)
+            .add_system_set(
+                SystemSet::new()
+                    .label(OrderLabel::Rendering)
+                    .after(OrderLabel::GameState)
+                    .with_system(graphics::update_sprite_translation)
+                    .with_system(graphics::update_sprite_animation)
+                    .with_system(graphics::update_sprite_size)
             );
     }
 }
