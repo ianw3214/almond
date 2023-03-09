@@ -1,8 +1,73 @@
+use std::collections::HashMap;
+
 use bevy::prelude::*;
 use bevy::render::render_resource::{FilterMode, SamplerDescriptor};
 use bevy::render::texture::ImageSampler::Descriptor;
 
 use crate::game::components::*;
+
+#[derive(Resource, Default)]
+pub struct AnimationTreeHandles {
+    pub handle_map : HashMap<String, Handle<AnimationTree>>
+}
+
+pub fn initialize_anim_trees(
+    mut animation_trees : ResMut<Assets<AnimationTree>>,
+    mut anim_trees : ResMut<AnimationTreeHandles>) 
+{
+    let mut up_transitions = HashMap::new();
+    up_transitions.insert(String::from("down"), String::from("down"));
+    up_transitions.insert(String::from("left"), String::from("left"));
+    up_transitions.insert(String::from("right"), String::from("right"));
+    let up_state = AnimationState {
+        start_frame : 0,
+        end_frame : 3,
+        transitions : up_transitions
+    };
+
+    let mut down_transitions = HashMap::new();
+    down_transitions.insert(String::from("up"), String::from("up"));
+    down_transitions.insert(String::from("left"), String::from("left"));
+    down_transitions.insert(String::from("right"), String::from("right"));
+    let down_state = AnimationState {
+        start_frame : 4,
+        end_frame : 7,
+        transitions : down_transitions
+    };
+
+    let mut left_transitions = HashMap::new();
+    left_transitions.insert(String::from("up"), String::from("up"));
+    left_transitions.insert(String::from("down"), String::from("down"));
+    left_transitions.insert(String::from("right"), String::from("right"));
+    let left_state = AnimationState {
+        start_frame : 8,
+        end_frame : 11,
+        transitions : left_transitions
+    };
+
+    let mut right_transitions = HashMap::new();
+    right_transitions.insert(String::from("up"), String::from("up"));
+    right_transitions.insert(String::from("down"), String::from("down"));
+    right_transitions.insert(String::from("left"), String::from("left"));
+    let right_state = AnimationState {
+        start_frame : 12,
+        end_frame : 15,
+        transitions : right_transitions
+    };
+
+    let mut player_animation_tree = HashMap::new();
+    player_animation_tree.insert(String::from("up"), up_state);
+    player_animation_tree.insert(String::from("down"), down_state);
+    player_animation_tree.insert(String::from("left"), left_state);
+    player_animation_tree.insert(String::from("right"), right_state);
+
+    let player_anim_tree = AnimationTree {
+        states : player_animation_tree,
+        initial : String::from("right")
+    };
+    let animation_tree_handle = animation_trees.add(player_anim_tree);
+    anim_trees.handle_map.insert(String::from("player"), animation_tree_handle);
+}
 
 pub fn update_sprite_translation(mut sprites : Query<(&mut Transform, &WorldPosition)>,) {
     for (mut transform, position) in sprites.iter_mut() {
