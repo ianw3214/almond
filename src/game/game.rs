@@ -7,8 +7,32 @@ use crate::game::graphics;
 
 fn update_player_movement(mut query : Query<(&mut Movement, &mut Animation), With<Player>>, input_state : Res<input::InputState>) {
     for (mut movement, mut anim) in &mut query {
-        movement.h_movement = input_state.controller.left_stick_x;
-        movement.v_movement = input_state.controller.left_stick_y;
+        if input_state.input_type == input::InputType::CONTROLLER {
+            movement.h_movement = input_state.controller.left_stick_x;
+            movement.v_movement = input_state.controller.left_stick_y;
+        }
+        if input_state.input_type == input::InputType::KEYBOARD {
+            let mut h_movement = 0.0;
+            let mut v_movement = 0.0;
+            if input_state.keyboard.w_held {
+                v_movement += 1.0;
+            }
+            if input_state.keyboard.a_held {
+                h_movement -= 1.0;
+            }
+            if input_state.keyboard.s_held {
+                v_movement -= 1.0;
+            }
+            if input_state.keyboard.d_held {
+                h_movement += 1.0;
+            }
+            if h_movement != 0.0 && v_movement != 0.0 {
+                v_movement *= 0.70710678118;
+                h_movement *= 0.70710678118;
+            }
+            movement.h_movement = h_movement;
+            movement.v_movement = v_movement;
+        }
         let angle = movement.v_movement.atan2(movement.h_movement);
         if movement.h_movement != 0.0 || movement.v_movement != 0.0 {
             if angle > std::f32::consts::FRAC_PI_4 * 3.0 || angle < -std::f32::consts::FRAC_PI_4 * 3.0 {
