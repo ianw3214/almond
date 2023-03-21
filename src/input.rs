@@ -15,7 +15,9 @@ pub struct MouseInputState {
     pub mouse_released : bool,
 
     pub x : f32,
-    pub y : f32
+    pub y : f32,
+    pub world_x : f32,
+    pub world_y : f32
 }
 
 #[derive(Default)]

@@ -5,6 +5,19 @@ use crate::input;
 
 use crate::game::graphics;
 
+fn set_mouse_world_coordinates(
+    mut input_state : ResMut<input::InputState>,
+    // query to get camera transform
+    camera_q: Query<(&Camera, &GlobalTransform), With<MainCamera>>,
+) {
+    let viewport_position : Vec2 = Vec2::new(input_state.mouse.x, input_state.mouse.y);
+    let (camera, camera_transform) = camera_q.single();
+    let world_pos = camera.viewport_to_world(camera_transform, viewport_position)
+        .map(|ray| ray.origin.truncate()).unwrap();
+    input_state.mouse.world_x = world_pos.x;
+    input_state.mouse.world_y = world_pos.y;
+}
+
 fn update_player_movement(mut query : Query<(&mut Movement, &mut Animation), With<Player>>, input_state : Res<input::InputState>) {
     for (mut movement, mut anim) in &mut query {
         if input_state.input_type == input::InputType::CONTROLLER {
@@ -100,9 +113,8 @@ fn spawn_bullet(
     if input_state.input_type == input::InputType::KEYBOARD && input_state.mouse.mouse_released {
         for player in players.iter() {
             // TODO: The transform position has to be translated between screen/world positions
-            let x_offset = input_state.mouse.x - player.x;
-            let y_offset = input_state.mouse.y - player.y;
-            println!("{} {}, {} {}, {} {}", input_state.mouse.x, input_state.mouse.y, player.x, player.y, x_offset, y_offset);
+            let x_offset = input_state.mouse.world_x - player.x;
+            let y_offset = input_state.mouse.world_y - player.y;
             if x_offset != 0.0 || y_offset != 0.0 {
                 bullet_angle = Some(y_offset.atan2(x_offset));
             } else {
@@ -136,7 +148,10 @@ fn spawn_bullet(
 }
 
 fn setup_camera(mut commands : Commands) {
-    commands.spawn(Camera2dBundle::default());
+    commands.spawn((
+        Camera2dBundle::default(),
+        MainCamera
+    ));
 }
 
 fn add_player(
@@ -191,6 +206,8 @@ pub struct Game;
 enum OrderLabel {
     /// everything that handles input
     Input,
+    /// Certain input to game translations
+    InputStaging,
     /// everything that moves things (works with transforms)
     GameState,
     /// systems that affect rendering
@@ -218,6 +235,12 @@ impl Plugin for Game {
                     .with_system(input::mouse_click_system)
                     .with_system(input::mouse_position_system)
                     .with_system(input::gamepad_system)
+            ).add_system_set(
+                SystemSet::new()
+                    .label(OrderLabel::InputStaging)
+                    .after(OrderLabel::Input)
+                    .before(OrderLabel::GameState)
+                    .with_system(set_mouse_world_coordinates)
             ).add_system_set(
                 SystemSet::new()
                     .label(OrderLabel::GameState)
