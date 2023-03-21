@@ -89,12 +89,28 @@ fn spawn_bullet(
     players : Query<&WorldPosition, With<Player>>,
     input_state : Res<input::InputState>) 
 {
-    if input_state.controller.right_trigger_released {
-        // TODO: This should depend on player facing instead of held stick angle
-        let mut angle = 0.0;
+    let mut bullet_angle : Option<f32> = None;
+    if input_state.input_type == input::InputType::CONTROLLER && input_state.controller.right_trigger_released {
         if input_state.controller.right_stick_x != 0.0 || input_state.controller.right_stick_y != 0.0 {
-            angle = input_state.controller.right_stick_y.atan2(input_state.controller.right_stick_x);
+            bullet_angle = Some(input_state.controller.right_stick_y.atan2(input_state.controller.right_stick_x));
+        } else {
+            bullet_angle = Some(0.0);
         }
+    }
+    if input_state.input_type == input::InputType::KEYBOARD && input_state.mouse.mouse_released {
+        for player in players.iter() {
+            // TODO: The transform position has to be translated between screen/world positions
+            let x_offset = input_state.mouse.x - player.x;
+            let y_offset = input_state.mouse.y - player.y;
+            println!("{} {}, {} {}, {} {}", input_state.mouse.x, input_state.mouse.y, player.x, player.y, x_offset, y_offset);
+            if x_offset != 0.0 || y_offset != 0.0 {
+                bullet_angle = Some(y_offset.atan2(x_offset));
+            } else {
+                bullet_angle = Some(0.0);
+            }
+        }
+    }
+    if let Some(angle) = bullet_angle {
         for player in players.iter() {
             commands.spawn(SpriteBundle{
                 sprite : Sprite {
@@ -199,6 +215,8 @@ impl Plugin for Game {
                     .label(OrderLabel::Input)
                     .with_system(input::keyboard_events)
                     .with_system(input::keyboard_system)
+                    .with_system(input::mouse_click_system)
+                    .with_system(input::mouse_position_system)
                     .with_system(input::gamepad_system)
             ).add_system_set(
                 SystemSet::new()

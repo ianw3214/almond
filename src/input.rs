@@ -11,6 +11,14 @@ pub struct KeyboardInputState {
 }
 
 #[derive(Default)]
+pub struct MouseInputState {
+    pub mouse_released : bool,
+
+    pub x : f32,
+    pub y : f32
+}
+
+#[derive(Default)]
 pub struct ControllerInputState {
     pub left_stick_x : f32,
     pub left_stick_y : f32,
@@ -34,6 +42,7 @@ pub enum InputType {
 pub struct InputState {
     pub controller : ControllerInputState,
     pub keyboard : KeyboardInputState,
+    pub mouse : MouseInputState,
     pub input_type : InputType
 }
 
@@ -83,6 +92,31 @@ pub fn keyboard_system(
         println!("A just released");
     }
      */
+}
+
+pub fn mouse_click_system(
+    mouse_button_input : Res<Input<MouseButton>>,
+    mut input_state : ResMut<InputState>
+) {
+    // reset all state first
+    input_state.mouse.mouse_released = false;
+
+    if mouse_button_input.just_released(MouseButton::Left) {
+        input_state.mouse.mouse_released = true;
+        input_state.input_type = InputType::KEYBOARD;
+    }
+}
+
+pub fn mouse_position_system(
+    windows : Res<Windows>,
+    mut input_state : ResMut<InputState>
+) {
+    let window = windows.get_primary().unwrap();
+
+    if let Some(position) = window.cursor_position() {
+        input_state.mouse.x = position.x;
+        input_state.mouse.y = position.y;
+    }
 }
 
 /*
