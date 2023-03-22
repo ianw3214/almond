@@ -58,3 +58,10 @@ pub struct RenderInfo {
     pub screen_width : f32,
     pub screen_height : f32
 }
+
+//////////////////////////////////////////////
+// Other misc. components
+
+/// Used to help identify our main camera
+#[derive(Component)]
+pub struct MainCamera;

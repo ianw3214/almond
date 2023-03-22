@@ -5,10 +5,47 @@ use crate::input;
 
 use crate::game::graphics;
 
+fn set_mouse_world_coordinates(
+    mut input_state : ResMut<input::InputState>,
+    // query to get camera transform
+    camera_q: Query<(&Camera, &GlobalTransform), With<MainCamera>>,
+) {
+    let viewport_position : Vec2 = Vec2::new(input_state.mouse.x, input_state.mouse.y);
+    let (camera, camera_transform) = camera_q.single();
+    let world_pos = camera.viewport_to_world(camera_transform, viewport_position)
+        .map(|ray| ray.origin.truncate()).unwrap();
+    input_state.mouse.world_x = world_pos.x;
+    input_state.mouse.world_y = world_pos.y;
+}
+
 fn update_player_movement(mut query : Query<(&mut Movement, &mut Animation), With<Player>>, input_state : Res<input::InputState>) {
     for (mut movement, mut anim) in &mut query {
-        movement.h_movement = input_state.controller.left_stick_x;
-        movement.v_movement = input_state.controller.left_stick_y;
+        if input_state.input_type == input::InputType::CONTROLLER {
+            movement.h_movement = input_state.controller.left_stick_x;
+            movement.v_movement = input_state.controller.left_stick_y;
+        }
+        if input_state.input_type == input::InputType::KEYBOARD {
+            let mut h_movement = 0.0;
+            let mut v_movement = 0.0;
+            if input_state.keyboard.w_held {
+                v_movement += 1.0;
+            }
+            if input_state.keyboard.a_held {
+                h_movement -= 1.0;
+            }
+            if input_state.keyboard.s_held {
+                v_movement -= 1.0;
+            }
+            if input_state.keyboard.d_held {
+                h_movement += 1.0;
+            }
+            if h_movement != 0.0 && v_movement != 0.0 {
+                v_movement *= 0.70710678118;
+                h_movement *= 0.70710678118;
+            }
+            movement.h_movement = h_movement;
+            movement.v_movement = v_movement;
+        }
         let angle = movement.v_movement.atan2(movement.h_movement);
         if movement.h_movement != 0.0 || movement.v_movement != 0.0 {
             if angle > std::f32::consts::FRAC_PI_4 * 3.0 || angle < -std::f32::consts::FRAC_PI_4 * 3.0 {
@@ -65,12 +102,27 @@ fn spawn_bullet(
     players : Query<&WorldPosition, With<Player>>,
     input_state : Res<input::InputState>) 
 {
-    if input_state.controller.right_trigger_released {
-        // TODO: This should depend on player facing instead of held stick angle
-        let mut angle = 0.0;
+    let mut bullet_angle : Option<f32> = None;
+    if input_state.input_type == input::InputType::CONTROLLER && input_state.controller.right_trigger_released {
         if input_state.controller.right_stick_x != 0.0 || input_state.controller.right_stick_y != 0.0 {
-            angle = input_state.controller.right_stick_y.atan2(input_state.controller.right_stick_x);
+            bullet_angle = Some(input_state.controller.right_stick_y.atan2(input_state.controller.right_stick_x));
+        } else {
+            bullet_angle = Some(0.0);
         }
+    }
+    if input_state.input_type == input::InputType::KEYBOARD && input_state.mouse.mouse_released {
+        for player in players.iter() {
+            // TODO: The transform position has to be translated between screen/world positions
+            let x_offset = input_state.mouse.world_x - player.x;
+            let y_offset = input_state.mouse.world_y - player.y;
+            if x_offset != 0.0 || y_offset != 0.0 {
+                bullet_angle = Some(y_offset.atan2(x_offset));
+            } else {
+                bullet_angle = Some(0.0);
+            }
+        }
+    }
+    if let Some(angle) = bullet_angle {
         for player in players.iter() {
             commands.spawn(SpriteBundle{
                 sprite : Sprite {
@@ -96,7 +148,10 @@ fn spawn_bullet(
 }
 
 fn setup_camera(mut commands : Commands) {
-    commands.spawn(Camera2dBundle::default());
+    commands.spawn((
+        Camera2dBundle::default(),
+        MainCamera
+    ));
 }
 
 fn add_player(
@@ -151,6 +206,8 @@ pub struct Game;
 enum OrderLabel {
     /// everything that handles input
     Input,
+    /// Certain input to game translations
+    InputStaging,
     /// everything that moves things (works with transforms)
     GameState,
     /// systems that affect rendering
@@ -175,7 +232,15 @@ impl Plugin for Game {
                     .label(OrderLabel::Input)
                     .with_system(input::keyboard_events)
                     .with_system(input::keyboard_system)
+                    .with_system(input::mouse_click_system)
+                    .with_system(input::mouse_position_system)
                     .with_system(input::gamepad_system)
+            ).add_system_set(
+                SystemSet::new()
+                    .label(OrderLabel::InputStaging)
+                    .after(OrderLabel::Input)
+                    .before(OrderLabel::GameState)
+                    .with_system(set_mouse_world_coordinates)
             ).add_system_set(
                 SystemSet::new()
                     .label(OrderLabel::GameState)
