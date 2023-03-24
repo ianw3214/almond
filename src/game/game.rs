@@ -4,6 +4,7 @@ use crate::game::components::*;
 use crate::input;
 
 use crate::game::graphics;
+use crate::game::debug;
 
 fn set_mouse_world_coordinates(
     mut input_state : ResMut<input::InputState>,
@@ -180,7 +181,16 @@ fn add_player(
         screen_height : 100.0
     })
     .insert(WorldPosition{ x : 0.0, y : 0.0})
-    .insert(Movement::default());
+    .insert(Movement::default())
+    // Add a debug collision box for the player
+    .with_children(|parent| {
+        parent.spawn(
+            SpriteBundle {
+                texture : asset_server.load("debug/red_overlay.png"),
+                ..default()
+            }
+        ).insert(debug::DebugCollision{});
+    });
 }
 
 fn add_enemy(mut commands : Commands) {
@@ -259,6 +269,7 @@ impl Plugin for Game {
                     .with_system(graphics::update_sprite_translation)
                     .with_system(graphics::update_sprite_animation)
                     .with_system(graphics::update_sprite_size)
+                    .with_system(debug::draw_collisions)
             );
     }
 }
