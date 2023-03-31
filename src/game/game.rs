@@ -76,13 +76,13 @@ fn update_bullet_movement(mut query : Query<(&mut Movement, &Bullet)>) {
 
 fn handle_bullet_collision(
     mut commands : Commands,
-    bullets : Query<(Entity, &WorldPosition, &Transform), With<Bullet>>,
-    targets : Query<(Entity, &WorldPosition, &Transform), With<Enemy>>) 
+    bullets : Query<(Entity, &WorldPosition, &Collision), With<Bullet>>,
+    targets : Query<(Entity, &WorldPosition, &Collision), With<Enemy>>) 
 {
     for (bullet, b_pos, b) in bullets.iter() {
         for (target, t_pos, t) in targets.iter() {
-            if b_pos.x < t_pos.x + t.scale.x && b_pos.x + b.scale.x > t_pos.x {
-                if b_pos.y < t_pos.y + t.scale.y && b_pos.y + b.scale.y > t_pos.y { 
+            if b_pos.x < t_pos.x + t.width && b_pos.x + b.width > t_pos.x {
+                if b_pos.y < t_pos.y + t.height && b_pos.y + b.height > t_pos.y { 
                     commands.entity(bullet).despawn();
                     commands.entity(target).despawn();
                 }
@@ -143,6 +143,9 @@ fn spawn_bullet(
             }).insert(WorldPosition{ 
                 x : player.x,
                 y : player.y
+            }).insert(Collision{
+                width : 3.0,
+                height : 3.0
             }).insert(Movement::default());
         }
     }
@@ -182,15 +185,7 @@ fn add_player(
     })
     .insert(WorldPosition{ x : 0.0, y : 0.0})
     .insert(Movement::default())
-    // Add a debug collision box for the player
-    .with_children(|parent| {
-        parent.spawn(
-            SpriteBundle {
-                texture : asset_server.load("debug/red_overlay.png"),
-                ..default()
-            }
-        ).insert(debug::DebugCollision{});
-    });
+    .insert(Collision{ width : 100.0, height : 100.0});
 }
 
 fn add_enemy(mut commands : Commands) {
@@ -206,7 +201,8 @@ fn add_enemy(mut commands : Commands) {
         },
         ..default()
     }).insert(Enemy)
-    .insert(WorldPosition{ x : 100.0, y : 0.0});
+    .insert(WorldPosition{ x : 100.0, y : 0.0})
+    .insert(Collision{ width : 30.0, height : 30.0});
 }
 
 pub struct Game;

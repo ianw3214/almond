@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 bevy = "*"
+bevy_prototype_debug_lines = "*"
 
 # Enable a small amount of optimization in debug builds
 [profile.dev]

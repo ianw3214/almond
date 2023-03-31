@@ -23,6 +23,12 @@ pub struct Bullet {
 #[derive(Component)]
 pub struct Enemy;
 
+#[derive(Component)]
+pub struct Collision {
+    pub width : f32,
+    pub height : f32
+}
+
 /////////////////////////////////////////////
 // Rendering / animation
 
