@@ -3,9 +3,35 @@ name = "rust_game"
 version = "0.1.0"
 edition = "2021"
 
+# All of Bevy's default features exept for the audio related ones, since they clash with bevy_kira_audio
 [dependencies]
-bevy = "*"
+bevy = { version = "*", default-features = false, features = [
+    "animation",
+    "bevy_asset",
+    "bevy_gilrs",
+    "bevy_scene",
+    "bevy_winit",
+    "bevy_core_pipeline",
+    "bevy_pbr",
+    "bevy_gltf",
+    "bevy_render",
+    "bevy_sprite",
+    "bevy_text",
+    "bevy_ui",
+    "multi-threaded",
+    "png",
+    "hdr",
+    "ktx2",
+    "zstd",
+    "x11",
+    "bevy_gizmos",
+    "tonemapping_luts",
+    "default_font",
+    "webgl2",
+] }
+bevy_kira_audio = "*"
 bevy_prototype_debug_lines = "*"
+rand = "*"
 
 # Enable a small amount of optimization in debug builds
 [profile.dev]

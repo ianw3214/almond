@@ -39,7 +39,7 @@ pub struct AnimationState {
     pub transitions : std::collections::HashMap<String, String>
 }
 
-#[derive(Debug, TypeUuid)]
+#[derive(Debug, TypeUuid, TypePath)]
 #[uuid = "39cadc56-aa9c-4543-8640-a018b74b5052"]
 pub struct AnimationTree {
     pub states : std::collections::HashMap<String, AnimationState>,
@@ -62,7 +62,17 @@ pub struct Animation {
 #[derive (Component)]
 pub struct RenderInfo {
     pub screen_width : f32,
-    pub screen_height : f32
+    pub screen_height : f32,
+    pub x_offset : f32,
+    pub y_offset : f32
+}
+
+//////////////////////////////////////////////
+/// AI components
+#[derive(Component, Default)]
+pub struct RandomMovement {
+    pub cooldown : u32,
+    pub direction : f32
 }
 
 //////////////////////////////////////////////

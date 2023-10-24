@@ -110,12 +110,14 @@ pub fn mouse_click_system(
 }
 
 pub fn mouse_position_system(
-    windows : Res<Windows>,
+    primary_query: Query<&Window>,
     mut input_state : ResMut<InputState>
 ) {
-    let window = windows.get_primary().unwrap();
+    let Ok(primary) = primary_query.get_single() else {
+        return;
+    };
 
-    if let Some(position) = window.cursor_position() {
+    if let Some(position) = primary.cursor_position() {
         input_state.mouse.x = position.x;
         input_state.mouse.y = position.y;
     }

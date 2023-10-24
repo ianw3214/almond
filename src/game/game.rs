@@ -6,6 +6,8 @@ use crate::input;
 use crate::game::graphics;
 use crate::game::debug;
 
+use rand::prelude::*;
+
 fn set_mouse_world_coordinates(
     mut input_state : ResMut<input::InputState>,
     // query to get camera transform
@@ -20,6 +22,7 @@ fn set_mouse_world_coordinates(
 }
 
 fn update_player_movement(mut query : Query<(&mut Movement, &mut Animation), With<Player>>, input_state : Res<input::InputState>) {
+    // TODO: Need to account for delta time
     for (mut movement, mut anim) in &mut query {
         if input_state.input_type == input::InputType::CONTROLLER {
             movement.h_movement = input_state.controller.left_stick_x;
@@ -61,6 +64,16 @@ fn update_player_movement(mut query : Query<(&mut Movement, &mut Animation), Wit
                 }
             }
         }
+    }
+}
+
+fn update_random_movement(mut query : Query<(&mut Movement, &mut RandomMovement)>) {
+    for (mut movement, mut random_move) in &mut query {
+        if random_move.cooldown == 0 {
+            random_move.cooldown = 10;
+        }
+        movement.h_movement = 1.0;
+        movement.v_movement = 1.0;
     }
 }
 
@@ -164,8 +177,8 @@ fn add_player(
     mut texture_atlases: ResMut<Assets<TextureAtlas>>,
     anim_trees : Res<graphics::AnimationTreeHandles>) 
 {
-    let frame_width : f32 = 10.0;
-    let frame_height : f32 = 10.0;
+    let frame_width : f32 = 60.0;
+    let frame_height : f32 = 60.0;
     let texture_handle = asset_server.load("test.png");
     let texture_atlas = TextureAtlas::from_grid(texture_handle, Vec2::new(frame_width, frame_height), 4, 4, Some(Vec2::new(1.0, 1.0)), None);
     let texture_atlas_handle = texture_atlases.add(texture_atlas);
@@ -181,11 +194,13 @@ fn add_player(
     })
     .insert(RenderInfo {
         screen_width : 100.0,
-        screen_height : 100.0
+        screen_height : 100.0,
+        x_offset : 25.0,
+        y_offset : 50.0
     })
     .insert(WorldPosition{ x : 0.0, y : 0.0})
     .insert(Movement::default())
-    .insert(Collision{ width : 100.0, height : 100.0});
+    .insert(Collision{ width : 50.0, height : 100.0});
 }
 
 fn add_enemy(mut commands : Commands) {
@@ -202,13 +217,15 @@ fn add_enemy(mut commands : Commands) {
         ..default()
     }).insert(Enemy)
     .insert(WorldPosition{ x : 100.0, y : 0.0})
-    .insert(Collision{ width : 30.0, height : 30.0});
+    .insert(Movement::default())
+    .insert(Collision{ width : 30.0, height : 30.0})
+    .insert(RandomMovement::default());
 }
 
 pub struct Game;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[derive(SystemLabel)]
+#[derive(SystemSet)]
 enum OrderLabel {
     /// everything that handles input
     Input,
@@ -235,7 +252,7 @@ impl Plugin for Game {
             // .add_system(input::gamepad_events)
             .add_system_set(
                 SystemSet::new()
-                    .label(OrderLabel::Input)
+                    .in_set(OrderLabel::Input)
                     .with_system(input::keyboard_events)
                     .with_system(input::keyboard_system)
                     .with_system(input::mouse_click_system)
@@ -243,16 +260,17 @@ impl Plugin for Game {
                     .with_system(input::gamepad_system)
             ).add_system_set(
                 SystemSet::new()
-                    .label(OrderLabel::InputStaging)
+                    .in_set(OrderLabel::InputStaging)
                     .after(OrderLabel::Input)
                     .before(OrderLabel::GameState)
                     .with_system(set_mouse_world_coordinates)
             ).add_system_set(
                 SystemSet::new()
-                    .label(OrderLabel::GameState)
+                    .in_set(OrderLabel::GameState)
                     .after(OrderLabel::Input)
                     .before(OrderLabel::Rendering)
                     .with_system(update_player_movement)
+                    .with_system(update_random_movement)
                     .with_system(update_bullet_movement)
                     .with_system(handle_bullet_collision)
                     .with_system(spawn_bullet)
@@ -260,7 +278,7 @@ impl Plugin for Game {
             )
             .add_system_set(
                 SystemSet::new()
-                    .label(OrderLabel::Rendering)
+                    .in_set(OrderLabel::Rendering)
                     .after(OrderLabel::GameState)
                     .with_system(graphics::update_sprite_translation)
                     .with_system(graphics::update_sprite_animation)

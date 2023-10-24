@@ -69,10 +69,10 @@ pub fn initialize_anim_trees(
     anim_trees.handle_map.insert(String::from("player"), animation_tree_handle);
 }
 
-pub fn update_sprite_translation(mut sprites : Query<(&mut Transform, &WorldPosition)>,) {
-    for (mut transform, position) in sprites.iter_mut() {
-        transform.translation.x = position.x;
-        transform.translation.y = position.y;
+pub fn update_sprite_translation(mut sprites : Query<(&mut Transform, &WorldPosition, Option<&RenderInfo>)>,) {
+    for (mut transform, position, render_info) in sprites.iter_mut() {
+        transform.translation.x = position.x + if let Some(offset) = render_info { offset.x_offset } else { 0.0 };
+        transform.translation.y = position.y + if let Some(offset) = render_info { offset.y_offset } else { 0.0 };
     }
 }
 
